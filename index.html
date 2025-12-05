@@ -68,7 +68,7 @@
             z-index: 1000;
         }
 
-        .clock-container {
+        .clock-wrapper {
             position: relative;
             width: 85vmin;
             height: 85vmin;
@@ -76,6 +76,15 @@
             max-height: 500px;
             min-width: 300px;
             min-height: 300px;
+        }
+
+        /* Clock container - will be completely recreated */
+        .clock-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
         }
 
         /* Perfect clock face */
@@ -266,18 +275,18 @@
                 letter-spacing: 12px;
             }
 
-            .clock-container,
+            .clock-wrapper,
             .price-display,
             .status,
             .btc-label,
             .loading {
-                display: none;
+                display: none !important;
             }
         }
 
         /* Portrait mode adjustments */
         @media (max-width: 600px) and (orientation: portrait) {
-            .clock-container {
+            .clock-wrapper {
                 width: 90vmin;
                 height: 90vmin;
             }
@@ -322,18 +331,8 @@
     <div class="container">
         <h1 class="title">BITCLOCK</h1>
         
-        <div class="clock-container">
-            <div class="clock-face"></div>
-            
-            <div class="btc-label">BTC</div>
-            
-            <div class="hands-container">
-                <div class="hand hour-hand"></div>
-                <div class="hand minute-hand"></div>
-            </div>
-            <div class="center-dot"></div>
-            
-            <div class="loading">Loading</div>
+        <div class="clock-wrapper">
+            <!-- Clock container will be dynamically created -->
         </div>
         
         <div class="price-display">
@@ -388,24 +387,23 @@
             hourScale: 10000,
             minuteScale: 1000,
             isLandscape: window.innerHeight <= 600 && window.innerWidth > window.innerHeight,
-            orientationLock: false,
-            clockElementsCreated: false
+            animationFrameId: null
         };
 
         // DOM Elements
         const elements = {
-            hourHand: document.querySelector('.hour-hand'),
-            minuteHand: document.querySelector('.minute-hand'),
             currentPrice: document.getElementById('currentPrice'),
             priceChange: document.getElementById('priceChange'),
             hourRange: document.getElementById('hourRange'),
-            loading: document.querySelector('.loading'),
             status: document.getElementById('status'),
-            clockContainer: document.querySelector('.clock-container'),
             title: document.querySelector('.title'),
             priceDisplay: document.querySelector('.price-display'),
-            btcLabel: document.querySelector('.btc-label'),
-            overlay: document.querySelector('.rotation-overlay')
+            btcLabel: null,
+            clockWrapper: document.querySelector('.clock-wrapper'),
+            overlay: document.querySelector('.rotation-overlay'),
+            clockContainer: null,
+            hourHand: null,
+            minuteHand: null
         };
 
         // Orientation change handling
@@ -425,37 +423,96 @@
                     clearTimeout(orientationChangeTimeout);
                 }
                 
-                // Hide overlay after 1 second and completely redraw everything
+                // Hide overlay after 1 second and completely recreate everything
                 orientationChangeTimeout = setTimeout(() => {
                     elements.overlay.style.display = 'none';
                     
-                    // Force complete redraw of clock
-                    destroyClockElements();
-                    createPerfectTicks();
-                    updateOrientationDisplay();
-                    lastOrientation = currentOrientation;
-                    
-                    // Reset clock animation
-                    if (!state.isLandscape) {
-                        updateClock();
+                    // Stop animation
+                    if (state.animationFrameId) {
+                        cancelAnimationFrame(state.animationFrameId);
+                        state.animationFrameId = null;
                     }
+                    
+                    // Completely destroy and recreate clock
+                    destroyClock();
+                    updateOrientationDisplay();
+                    createClock();
+                    
+                    // Restart animation if in portrait mode
+                    if (!state.isLandscape) {
+                        requestAnimationFrame(updateClock);
+                    }
+                    
+                    lastOrientation = currentOrientation;
                 }, 1000);
             }
         }
 
-        // Destroy all clock elements
-        function destroyClockElements() {
-            const container = elements.clockContainer;
+        // Completely destroy clock
+        function destroyClock() {
+            // Clear clock wrapper
+            elements.clockWrapper.innerHTML = '';
             
-            // Remove all ticks
-            const ticks = container.querySelectorAll('.tick');
-            ticks.forEach(tick => tick.remove());
+            // Reset references
+            elements.clockContainer = null;
+            elements.hourHand = null;
+            elements.minuteHand = null;
+            elements.btcLabel = null;
+        }
+
+        // Create complete clock from scratch
+        function createClock() {
+            if (state.isLandscape) return;
             
-            // Remove all price labels
-            const labels = container.querySelectorAll('.price-label');
-            labels.forEach(label => label.remove());
+            // Create clock container
+            elements.clockContainer = document.createElement('div');
+            elements.clockContainer.className = 'clock-container';
+            elements.clockWrapper.appendChild(elements.clockContainer);
             
-            state.clockElementsCreated = false;
+            // Create clock face
+            const clockFace = document.createElement('div');
+            clockFace.className = 'clock-face';
+            elements.clockContainer.appendChild(clockFace);
+            
+            // Create ticks and labels
+            createPerfectTicks();
+            
+            // Create BTC label
+            elements.btcLabel = document.createElement('div');
+            elements.btcLabel.className = 'btc-label';
+            elements.btcLabel.textContent = 'BTC';
+            elements.clockContainer.appendChild(elements.btcLabel);
+            
+            // Create hands container
+            const handsContainer = document.createElement('div');
+            handsContainer.className = 'hands-container';
+            elements.clockContainer.appendChild(handsContainer);
+            
+            // Create hour hand
+            elements.hourHand = document.createElement('div');
+            elements.hourHand.className = 'hand hour-hand';
+            handsContainer.appendChild(elements.hourHand);
+            
+            // Create minute hand
+            elements.minuteHand = document.createElement('div');
+            elements.minuteHand.className = 'hand minute-hand';
+            handsContainer.appendChild(elements.minuteHand);
+            
+            // Create center dot
+            const centerDot = document.createElement('div');
+            centerDot.className = 'center-dot';
+            elements.clockContainer.appendChild(centerDot);
+            
+            // Create loading element
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.textContent = 'Loading';
+            elements.clockContainer.appendChild(loading);
+            
+            // Hide loading if data already loaded
+            if (!state.isLoading) {
+                loading.style.display = 'none';
+            }
         }
 
         // Update display based on orientation
@@ -474,10 +531,9 @@
                 elements.title.style.display = 'block';
                 
                 // Hide all other elements
-                elements.clockContainer.style.display = 'none';
+                elements.clockWrapper.style.display = 'none';
                 elements.priceDisplay.style.display = 'none';
                 elements.status.style.display = 'none';
-                elements.btcLabel.style.display = 'none';
             } else {
                 // Portrait mode - show everything
                 elements.title.style.position = 'absolute';
@@ -489,35 +545,15 @@
                 elements.title.style.display = 'block';
                 
                 // Show all other elements
-                elements.clockContainer.style.display = 'block';
+                elements.clockWrapper.style.display = 'block';
                 elements.priceDisplay.style.display = 'block';
                 elements.status.style.display = 'block';
-                elements.btcLabel.style.display = 'block';
-            }
-        }
-
-        // Initialize
-        async function init() {
-            // Initial creation
-            createPerfectTicks();
-            updateOrientationDisplay();
-            
-            // Listen for orientation changes
-            window.addEventListener('resize', handleOrientationChange);
-            
-            // Initial data fetch
-            await fetchPrice();
-            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
-            
-            // Start clock animation if in portrait
-            if (!state.isLandscape) {
-                requestAnimationFrame(updateClock);
             }
         }
 
         // Create perfect tick marks
         function createPerfectTicks() {
-            if (state.clockElementsCreated) return;
+            if (!elements.clockContainer || state.isLandscape) return;
             
             const container = elements.clockContainer;
             const width = container.offsetWidth;
@@ -558,11 +594,12 @@
 
             // Create price labels
             updatePriceLabels();
-            state.clockElementsCreated = true;
         }
 
         // Update price labels based on current scale
         function updatePriceLabels() {
+            if (!elements.clockContainer || state.isLandscape) return;
+            
             // Remove existing labels if any
             const existingLabels = elements.clockContainer.querySelectorAll('.price-label');
             existingLabels.forEach(el => el.remove());
@@ -628,6 +665,25 @@
             }
         }
 
+        // Initialize
+        async function init() {
+            // Initial setup
+            updateOrientationDisplay();
+            createClock();
+            
+            // Listen for orientation changes
+            window.addEventListener('resize', handleOrientationChange);
+            
+            // Initial data fetch
+            await fetchPrice();
+            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
+            
+            // Start clock animation if in portrait
+            if (!state.isLandscape) {
+                requestAnimationFrame(updateClock);
+            }
+        }
+
         // Fetch Bitcoin price
         async function fetchPrice() {
             try {
@@ -644,7 +700,12 @@
                 // Update scale if needed
                 updateScale(state.price);
                 
-                elements.loading.style.display = 'none';
+                // Hide loading
+                if (elements.clockContainer) {
+                    const loading = elements.clockContainer.querySelector('.loading');
+                    if (loading) loading.style.display = 'none';
+                }
+                
                 elements.status.textContent = 'Live';
                 elements.status.style.opacity = '0.25';
                 
@@ -660,7 +721,12 @@
                 // Update scale if needed
                 updateScale(state.price);
                 
-                elements.loading.style.display = 'none';
+                // Hide loading
+                if (elements.clockContainer) {
+                    const loading = elements.clockContainer.querySelector('.loading');
+                    if (loading) loading.style.display = 'none';
+                }
+                
                 elements.status.textContent = 'Simulated';
                 elements.status.style.opacity = '0.15';
             }
@@ -668,9 +734,9 @@
 
         // Update clock hands
         function updateClock() {
-            if (state.isLoading || state.isLandscape) {
-                // Don't update clock in landscape mode or while loading
-                requestAnimationFrame(updateClock);
+            if (state.isLoading || state.isLandscape || !elements.hourHand || !elements.minuteHand) {
+                // Don't update clock in landscape mode, while loading, or if elements don't exist
+                state.animationFrameId = requestAnimationFrame(updateClock);
                 return;
             }
 
@@ -696,11 +762,13 @@
             // Update display
             updateDisplay(hourValue, remainder);
             
-            requestAnimationFrame(updateClock);
+            state.animationFrameId = requestAnimationFrame(updateClock);
         }
 
         // Update minute hand color
         function updateMinuteHandColor() {
+            if (!elements.minuteHand) return;
+            
             if (state.change >= 0) {
                 elements.minuteHand.style.background = '#00ff9d';
                 elements.minuteHand.style.boxShadow = '0 0 8px rgba(0, 255, 157, 0.5)';
