@@ -2,41 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BTClock</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            overscroll-behavior: none;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: #000000;
             color: #ffffff;
-            min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         .container {
-            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
 
         .title {
+            position: absolute;
+            top: 40px;
             font-weight: 300;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             letter-spacing: 8px;
-            margin-bottom: 40px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
         }
@@ -47,8 +64,8 @@
             height: 85vmin;
             max-width: 500px;
             max-height: 500px;
-            min-width: 320px;
-            min-height: 320px;
+            min-width: 300px;
+            min-height: 300px;
         }
 
         /* Perfect clock face */
@@ -56,48 +73,47 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 50%;
-            box-shadow: 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-                0 0 0 1px rgba(0, 0, 0, 0.8);
         }
 
-        /* Perfect tick marks - 60 total */
-        .tick-mark {
+        /* Perfect tick marks - geometric precision */
+        .tick {
             position: absolute;
-            width: 1px;
             background: rgba(255, 255, 255, 0.7);
-            left: 50%;
-            transform-origin: 50% 100%;
+            transform-origin: 0% 0%;
         }
 
         .tick-hour {
-            height: 16px;
+            width: 1.5px;
+            height: 24px;
             background: rgba(255, 255, 255, 0.9);
         }
 
         .tick-five {
-            height: 12px;
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.6);
         }
 
         .tick-minute {
-            height: 8px;
+            width: 0.5px;
+            height: 12px;
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* Price labels - perfectly positioned */
+        /* Price labels - geometric perfection */
         .price-label {
             position: absolute;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 300;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             transform: translate(-50%, -50%);
             font-variant-numeric: tabular-nums;
         }
 
-        /* Hands - perfectly centered and sized */
+        /* Hands - mathematical precision */
         .hands-container {
             position: absolute;
             width: 100%;
@@ -112,46 +128,47 @@
             left: 50%;
             bottom: 50%;
             border-radius: 1px;
-            transition: transform 0.6s cubic-bezier(0.4, 2.3, 0.8, 1);
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1);
             transform: translateX(-50%) rotate(0deg);
         }
 
         .hour-hand {
-            width: 2.5px;
-            height: 28%;
+            width: 2.2px;
+            height: 26%;
             background: #ffffff;
             z-index: 2;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
         }
 
         .minute-hand {
-            width: 1.5px;
-            height: 38%;
+            width: 1.2px;
+            height: 36%;
             background: #ffffff;
             z-index: 3;
         }
 
         .center-dot {
             position: absolute;
-            width: 9px;
-            height: 9px;
+            width: 8px;
+            height: 8px;
             background: #ffffff;
             border-radius: 50%;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
         }
 
-        /* Price display - minimal */
+        /* Price display */
         .price-display {
-            margin-top: 40px;
+            position: absolute;
+            bottom: 40px;
             text-align: center;
         }
 
         .current-price {
-            font-size: 2.8rem;
+            font-size: 2.6rem;
             font-weight: 300;
             letter-spacing: 1px;
             color: #ffffff;
@@ -160,7 +177,7 @@
         }
 
         .price-details {
-            margin-top: 20px;
+            margin-top: 12px;
             display: flex;
             gap: 30px;
             justify-content: center;
@@ -171,15 +188,15 @@
         }
 
         .detail-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: rgba(255, 255, 255, 0.5);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .detail-value {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 300;
             font-family: 'SF Mono', monospace;
             color: rgba(255, 255, 255, 0.8);
@@ -199,24 +216,23 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             letter-spacing: 1px;
-            text-transform: uppercase;
             font-weight: 300;
         }
 
-        /* Status indicator */
+        /* Status indicator - minimal */
         .status {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             right: 20px;
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.25);
             letter-spacing: 1px;
             font-weight: 300;
         }
 
-        /* Perfect positioning for all ticks */
+        /* Geometric perfection in positioning */
         @media (max-width: 600px) {
             .clock-container {
                 width: 90vmin;
@@ -224,19 +240,23 @@
             }
             
             .title {
-                font-size: 2rem;
+                font-size: 1.8rem;
                 letter-spacing: 6px;
-                margin-bottom: 30px;
+                top: 30px;
             }
             
             .current-price {
                 font-size: 2.2rem;
             }
             
-            .price-details {
-                flex-direction: column;
-                gap: 15px;
+            .price-display {
+                bottom: 30px;
             }
+        }
+
+        /* Disable all interactions */
+        *:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -246,7 +266,6 @@
         
         <div class="clock-container">
             <div class="clock-face"></div>
-            
             <!-- Ticks and labels will be generated by JavaScript -->
             
             <div class="hands-container">
@@ -277,6 +296,23 @@
     </div>
 
     <script>
+        // Prevent all interactions
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        });
+        
         // Configuration
         const CONFIG = {
             API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
@@ -310,41 +346,57 @@
 
         // Initialize
         async function init() {
-            createPerfectTicks();
+            createPerfectGeometricTicks();
             await fetchPrice();
             setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
             requestAnimationFrame(updateClock);
         }
 
-        // Create perfect tick marks
-        function createPerfectTicks() {
-            // Create 60 tick marks (one for each minute)
+        // Create perfect geometric tick marks with impossible positioning
+        function createPerfectGeometricTicks() {
+            const container = elements.clockContainer;
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 10;
+            
+            // Create 60 tick marks with mathematical precision
             for (let i = 0; i < 60; i++) {
                 const tick = document.createElement('div');
-                const angle = i * 6; // 6 degrees per minute
+                const angle = (i * 6) * (Math.PI / 180); // Convert to radians
                 
-                // Classify tick type
+                // Calculate position with geometric precision
+                const x = centerX + Math.sin(angle) * (radius - 1);
+                const y = centerY - Math.cos(angle) * (radius - 1);
+                
+                // Determine tick type based on position
                 if (i % 15 === 0) { // 12, 3, 6, 9
-                    tick.className = 'tick-mark tick-hour';
+                    tick.className = 'tick tick-hour';
                 } else if (i % 5 === 0) { // Every 5 minutes
-                    tick.className = 'tick-mark tick-five';
+                    tick.className = 'tick tick-five';
                 } else {
-                    tick.className = 'tick-mark tick-minute';
+                    tick.className = 'tick tick-minute';
                 }
                 
-                // Position at edge of clock
-                tick.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-                tick.style.top = '0%';
+                // Position with absolute precision
+                tick.style.left = `${x}px`;
+                tick.style.top = `${y}px`;
                 
-                elements.clockContainer.appendChild(tick);
+                // Rotate tick to point outward from center
+                const rotation = i * 6;
+                tick.style.transform = `rotate(${rotation}deg)`;
+                tick.style.transformOrigin = '0% 0%';
+                
+                container.appendChild(tick);
             }
 
-            // Create price labels at 12, 3, 6, 9
+            // Create price labels with geometric perfection
             const labels = [
-                { angle: 0, text: '120k', value: 120000 },
-                { angle: 90, text: '30k', value: 30000 },
-                { angle: 180, text: '60k', value: 60000 },
-                { angle: 270, text: '90k', value: 90000 }
+                { angle: -90, text: '120k', value: 120000 }, // 12 o'clock
+                { angle: 0, text: '30k', value: 30000 },    // 3 o'clock
+                { angle: 90, text: '60k', value: 60000 },   // 6 o'clock
+                { angle: 180, text: '90k', value: 90000 }   // 9 o'clock
             ];
 
             labels.forEach(label => {
@@ -352,18 +404,31 @@
                 labelEl.className = 'price-label';
                 labelEl.textContent = label.text;
                 
-                // Position 40% from center (perfect positioning)
-                const radius = 40;
-                const rad = (label.angle - 90) * Math.PI / 180; // -90° because 0° is at 3 o'clock in CSS
-                const x = 50 + Math.cos(rad) * radius;
-                const y = 50 + Math.sin(rad) * radius;
+                // Convert angle to radians
+                const angleRad = label.angle * (Math.PI / 180);
+                const labelRadius = radius - 35; // Position inside ticks
                 
-                labelEl.style.left = `${x}%`;
-                labelEl.style.top = `${y}%`;
+                // Calculate position with geometric precision
+                const x = centerX + Math.cos(angleRad) * labelRadius;
+                const y = centerY + Math.sin(angleRad) * labelRadius;
                 
-                elements.clockContainer.appendChild(labelEl);
+                labelEl.style.left = `${x}px`;
+                labelEl.style.top = `${y}px`;
+                
+                container.appendChild(labelEl);
             });
         }
+
+        // Update geometric positions on resize
+        window.addEventListener('resize', function() {
+            // Clear existing ticks and labels
+            const container = elements.clockContainer;
+            const existingTicks = container.querySelectorAll('.tick, .price-label');
+            existingTicks.forEach(el => el.remove());
+            
+            // Recreate with new dimensions
+            createPerfectGeometricTicks();
+        });
 
         // Fetch Bitcoin price
         async function fetchPrice() {
@@ -380,24 +445,24 @@
                 
                 elements.loading.style.display = 'none';
                 elements.status.textContent = 'Live';
-                elements.status.style.opacity = '0.5';
+                elements.status.style.opacity = '0.25';
                 
             } catch (error) {
                 console.error('API Error:', error);
                 
                 // Fallback to simulated data
-                state.price += (Math.random() - 0.5) * 1000;
-                state.change = (Math.random() - 0.5) * 5;
+                state.price += (Math.random() - 0.5) * 800;
+                state.change = (Math.random() - 0.5) * 4;
                 state.isLive = false;
                 state.isLoading = false;
                 
                 elements.loading.style.display = 'none';
                 elements.status.textContent = 'Simulated';
-                elements.status.style.opacity = '0.3';
+                elements.status.style.opacity = '0.15';
             }
         }
 
-        // Update clock hands
+        // Update clock hands with mathematical precision
         function updateClock() {
             if (state.isLoading) {
                 requestAnimationFrame(updateClock);
@@ -416,7 +481,7 @@
             const minuteValue = remainder / CONFIG.PRICE_SCALE.minute;
             const minuteAngle = (minuteValue * 360) % 360;
             
-            // Apply rotations
+            // Apply rotations with geometric precision
             elements.hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
             elements.minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
             
@@ -433,22 +498,23 @@
         function updateMinuteHandColor() {
             if (state.change >= 0) {
                 elements.minuteHand.style.background = '#00ff9d';
-                elements.minuteHand.style.boxShadow = '0 0 10px rgba(0, 255, 157, 0.4)';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(0, 255, 157, 0.5)';
             } else {
                 elements.minuteHand.style.background = '#ff4d4d';
-                elements.minuteHand.style.boxShadow = '0 0 10px rgba(255, 77, 77, 0.4)';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(255, 77, 77, 0.5)';
             }
         }
 
         // Update display
         function updateDisplay(hourValue, remainder) {
-            // Format price with commas
-            elements.currentPrice.textContent = state.price.toLocaleString('en-US', {
+            // Format price with geometric spacing
+            const priceStr = state.price.toLocaleString('en-US', {
                 minimumIntegerDigits: 5,
                 useGrouping: true
-            }).replace(/,/g, ',');
+            });
+            elements.currentPrice.textContent = priceStr.replace(/,/g, ',');
             
-            // Format change
+            // Format change with precision
             const changeFormatted = Math.abs(state.change).toFixed(2);
             if (state.change >= 0) {
                 elements.priceChange.textContent = `+${changeFormatted}%`;
@@ -463,7 +529,7 @@
             const rangeStart = currentHour * CONFIG.PRICE_SCALE.hour;
             const rangeEnd = (currentHour + 1) * CONFIG.PRICE_SCALE.hour;
             
-            // Handle wrap-around at 120k
+            // Handle wrap-around at 120k with geometric logic
             let rangeText;
             if (currentHour === 11) {
                 rangeText = `$${(rangeStart/1000).toFixed(0)}k-120k`;
@@ -476,7 +542,10 @@
         }
 
         // Initialize on load
-        window.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure DOM is fully rendered
+            setTimeout(init, 100);
+        });
     </script>
 </body>
 </html>
