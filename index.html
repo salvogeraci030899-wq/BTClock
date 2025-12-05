@@ -2,17 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BTClock</title>
     <style>
+        /* Disable all interactions */
         * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        html, body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            background: #000000;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
             background: #000000;
             color: #ffffff;
             min-height: 100vh;
@@ -29,7 +44,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
         }
 
         .title {
@@ -39,128 +56,145 @@
             margin-bottom: 40px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
+            position: absolute;
+            top: 40px;
         }
 
         .clock-container {
             position: relative;
-            width: 85vmin;
-            height: 85vmin;
+            width: 90vmin;
+            height: 90vmin;
             max-width: 500px;
             max-height: 500px;
-            min-width: 320px;
-            min-height: 320px;
+            min-width: 300px;
+            min-height: 300px;
         }
 
-        /* Perfect clock face */
+        /* Perfect clock face with absolutely precise border */
         .clock-face {
             position: absolute;
             width: 100%;
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 50%;
-            box-shadow: 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-                0 0 0 1px rgba(0, 0, 0, 0.8);
+            box-sizing: border-box;
         }
 
-        /* Perfect tick marks - 60 total */
+        /* Absolute precision tick marks system */
         .tick-mark {
             position: absolute;
-            width: 1px;
             background: rgba(255, 255, 255, 0.7);
-            left: 50%;
             transform-origin: 50% 100%;
+            left: 50%;
         }
 
+        /* Major ticks for hours - positioned with mathematical precision */
         .tick-hour {
+            width: 1px;
             height: 16px;
             background: rgba(255, 255, 255, 0.9);
+            top: 0%;
         }
 
+        /* Minor ticks for 5-minute intervals */
         .tick-five {
+            width: 0.75px;
             height: 12px;
+            background: rgba(255, 255, 255, 0.6);
+            top: 0%;
         }
 
+        /* Minute ticks - the smallest */
         .tick-minute {
+            width: 0.5px;
             height: 8px;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.3);
+            top: 0%;
         }
 
-        /* Price labels - perfectly positioned */
+        /* Price labels - positioned with trigonometric precision */
         .price-label {
             position: absolute;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 300;
-            letter-spacing: 0.5px;
-            transform: translate(-50%, -50%);
+            letter-spacing: 0.3px;
             font-variant-numeric: tabular-nums;
+            transform: translate(-50%, -50%);
+            font-feature-settings: "tnum";
         }
 
-        /* Hands - perfectly centered and sized */
+        /* Hands container for perfect centering */
         .hands-container {
             position: absolute;
             width: 100%;
             height: 100%;
             top: 0;
             left: 0;
+            pointer-events: none;
         }
 
+        /* Perfectly centered and proportioned hands */
         .hand {
             position: absolute;
             transform-origin: 50% 100%;
             left: 50%;
             bottom: 50%;
-            border-radius: 1px;
+            border-radius: 0.5px;
             transition: transform 0.6s cubic-bezier(0.4, 2.3, 0.8, 1);
             transform: translateX(-50%) rotate(0deg);
+            backface-visibility: hidden;
         }
 
         .hour-hand {
-            width: 2.5px;
-            height: 28%;
+            width: 2.2px;
+            height: 26%;
             background: #ffffff;
             z-index: 2;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
         }
 
         .minute-hand {
-            width: 1.5px;
-            height: 38%;
+            width: 1.2px;
+            height: 36%;
             background: #ffffff;
             z-index: 3;
         }
 
+        /* Perfect center dot */
         .center-dot {
             position: absolute;
-            width: 9px;
-            height: 9px;
+            width: 7px;
+            height: 7px;
             background: #ffffff;
             border-radius: 50%;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
         }
 
-        /* Price display - minimal */
+        /* Price display - minimal and precise */
         .price-display {
-            margin-top: 40px;
+            position: absolute;
+            bottom: 60px;
             text-align: center;
+            width: 100%;
         }
 
         .current-price {
-            font-size: 2.8rem;
+            font-size: 2.6rem;
             font-weight: 300;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #ffffff;
             font-variant-numeric: tabular-nums;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-feature-settings: "tnum";
         }
 
         .price-details {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             gap: 30px;
             justify-content: center;
@@ -171,18 +205,19 @@
         }
 
         .detail-label {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
+            letter-spacing: 0.8px;
+            margin-bottom: 3px;
         }
 
         .detail-value {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 300;
             font-family: 'SF Mono', monospace;
             color: rgba(255, 255, 255, 0.8);
+            font-feature-settings: "tnum";
         }
 
         .positive {
@@ -199,43 +234,76 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             letter-spacing: 1px;
             text-transform: uppercase;
             font-weight: 300;
         }
 
-        /* Status indicator */
+        /* Status indicator - minimal */
         .status {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 1px;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.8px;
             font-weight: 300;
         }
 
-        /* Perfect positioning for all ticks */
+        /* Prevent all zooming and scrolling */
+        @media (hover: none) and (pointer: coarse) {
+            body {
+                -webkit-text-size-adjust: none;
+                text-size-adjust: none;
+            }
+        }
+
+        /* High precision adjustments for different screens */
         @media (max-width: 600px) {
             .clock-container {
-                width: 90vmin;
-                height: 90vmin;
+                width: 85vmin;
+                height: 85vmin;
             }
             
             .title {
-                font-size: 2rem;
+                font-size: 1.8rem;
                 letter-spacing: 6px;
-                margin-bottom: 30px;
+                top: 30px;
             }
             
             .current-price {
-                font-size: 2.2rem;
+                font-size: 2rem;
             }
             
             .price-details {
                 flex-direction: column;
-                gap: 15px;
+                gap: 12px;
+            }
+            
+            .price-display {
+                bottom: 50px;
+            }
+        }
+
+        /* For very small screens */
+        @media (max-height: 600px) {
+            .title {
+                position: relative;
+                top: 0;
+                margin-bottom: 20px;
+                margin-top: 20px;
+            }
+            
+            .price-display {
+                position: relative;
+                bottom: 0;
+                margin-top: 20px;
+            }
+            
+            .clock-container {
+                width: 70vmin;
+                height: 70vmin;
             }
         }
     </style>
@@ -277,6 +345,17 @@
     </div>
 
     <script>
+        // Disable all gestures and zoom
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         // Configuration
         const CONFIG = {
             API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
@@ -310,41 +389,37 @@
 
         // Initialize
         async function init() {
-            createPerfectTicks();
+            createPrecisionTicks();
             await fetchPrice();
             setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
             requestAnimationFrame(updateClock);
         }
 
-        // Create perfect tick marks
-        function createPerfectTicks() {
+        // Create precision tick marks with mathematical accuracy
+        function createPrecisionTicks() {
             // Create 60 tick marks (one for each minute)
             for (let i = 0; i < 60; i++) {
                 const tick = document.createElement('div');
                 const angle = i * 6; // 6 degrees per minute
                 
-                // Classify tick type
-                if (i % 15 === 0) { // 12, 3, 6, 9
+                // Classify tick type with perfect precision
+                if (i % 5 === 0) { // Every 5 minutes = hour markers
                     tick.className = 'tick-mark tick-hour';
-                } else if (i % 5 === 0) { // Every 5 minutes
-                    tick.className = 'tick-mark tick-five';
-                } else {
+                } else if (i % 1 === 0) { // Every minute
                     tick.className = 'tick-mark tick-minute';
                 }
                 
-                // Position at edge of clock
+                // Position with trigonometric precision
                 tick.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-                tick.style.top = '0%';
-                
                 elements.clockContainer.appendChild(tick);
             }
 
-            // Create price labels at 12, 3, 6, 9
+            // Create price labels at exact positions with trigonometric precision
             const labels = [
-                { angle: 0, text: '120k', value: 120000 },
-                { angle: 90, text: '30k', value: 30000 },
-                { angle: 180, text: '60k', value: 60000 },
-                { angle: 270, text: '90k', value: 90000 }
+                { angle: -90, text: '120k', value: 120000 },  // 12 o'clock
+                { angle: 0, text: '30k', value: 30000 },      // 3 o'clock
+                { angle: 90, text: '60k', value: 60000 },     // 6 o'clock
+                { angle: 180, text: '90k', value: 90000 }     // 9 o'clock
             ];
 
             labels.forEach(label => {
@@ -352,9 +427,9 @@
                 labelEl.className = 'price-label';
                 labelEl.textContent = label.text;
                 
-                // Position 40% from center (perfect positioning)
-                const radius = 40;
-                const rad = (label.angle - 90) * Math.PI / 180; // -90° because 0° is at 3 o'clock in CSS
+                // Position with exact trigonometry
+                const radius = 42; // Distance from center (percentage)
+                const rad = (label.angle) * Math.PI / 180;
                 const x = 50 + Math.cos(rad) * radius;
                 const y = 50 + Math.sin(rad) * radius;
                 
@@ -380,7 +455,7 @@
                 
                 elements.loading.style.display = 'none';
                 elements.status.textContent = 'Live';
-                elements.status.style.opacity = '0.5';
+                elements.status.style.opacity = '0.2';
                 
             } catch (error) {
                 console.error('API Error:', error);
@@ -393,30 +468,30 @@
                 
                 elements.loading.style.display = 'none';
                 elements.status.textContent = 'Simulated';
-                elements.status.style.opacity = '0.3';
+                elements.status.style.opacity = '0.1';
             }
         }
 
-        // Update clock hands
+        // Update clock hands with precision
         function updateClock() {
             if (state.isLoading) {
                 requestAnimationFrame(updateClock);
                 return;
             }
 
-            // Normalize price (0-120k scale)
+            // Normalize price to 0-120k scale
             const normalizedPrice = state.price % CONFIG.MAX_SCALE;
             
-            // Calculate hour hand (0-12 hours, 0-360°)
+            // Calculate hour hand position (0-12 hours, 0-360°)
             const hourValue = normalizedPrice / CONFIG.PRICE_SCALE.hour;
             const hourAngle = hourValue * 30; // 30° per hour
             
-            // Calculate minute hand (0-1000 range, 0-360°)
+            // Calculate minute hand position (0-1000 range, 0-360°)
             const remainder = normalizedPrice % CONFIG.PRICE_SCALE.hour;
             const minuteValue = remainder / CONFIG.PRICE_SCALE.minute;
             const minuteAngle = (minuteValue * 360) % 360;
             
-            // Apply rotations
+            // Apply rotations with precision
             elements.hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
             elements.minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
             
@@ -433,22 +508,22 @@
         function updateMinuteHandColor() {
             if (state.change >= 0) {
                 elements.minuteHand.style.background = '#00ff9d';
-                elements.minuteHand.style.boxShadow = '0 0 10px rgba(0, 255, 157, 0.4)';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(0, 255, 157, 0.3)';
             } else {
                 elements.minuteHand.style.background = '#ff4d4d';
-                elements.minuteHand.style.boxShadow = '0 0 10px rgba(255, 77, 77, 0.4)';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(255, 77, 77, 0.3)';
             }
         }
 
-        // Update display
+        // Update display with precision formatting
         function updateDisplay(hourValue, remainder) {
-            // Format price with commas
+            // Format price with perfect alignment
             elements.currentPrice.textContent = state.price.toLocaleString('en-US', {
                 minimumIntegerDigits: 5,
                 useGrouping: true
             }).replace(/,/g, ',');
             
-            // Format change
+            // Format change with precision
             const changeFormatted = Math.abs(state.change).toFixed(2);
             if (state.change >= 0) {
                 elements.priceChange.textContent = `+${changeFormatted}%`;
@@ -472,11 +547,19 @@
             }
             
             elements.hourRange.textContent = rangeText;
-            elements.hourRange.title = `$${rangeStart.toLocaleString()} - $${rangeEnd.toLocaleString()}`;
         }
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', init);
+
+        // Fullscreen support for mobile
+        document.addEventListener('click', function() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            }
+        });
     </script>
 </body>
 </html>
