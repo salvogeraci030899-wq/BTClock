@@ -102,7 +102,7 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* Price labels - adjusted spacing */
+        /* Price labels - increased distance from ticks */
         .price-label {
             position: absolute;
             color: rgba(255, 255, 255, 0.7);
@@ -344,7 +344,7 @@
             change: 0,
             isLive: false,
             isLoading: true,
-            currentScale: 120000, // 120k or 240k
+            currentScale: 120000,
             hourScale: 10000,
             minuteScale: 1000
         };
@@ -442,7 +442,7 @@
                 ];
             }
 
-            // Create new labels with adjusted spacing
+            // Create new labels with INCREASED distance from ticks
             labels.forEach(label => {
                 const labelEl = document.createElement('div');
                 labelEl.className = 'price-label';
@@ -451,8 +451,9 @@
                 // Convert angle to radians
                 const angleRad = label.angle * (Math.PI / 180);
                 
-                // Adjusted spacing: increased distance from ticks
-                const labelRadius = radius - 28; // Was 35, now 28 (7 pixels further out)
+                // CORRETTO: Aumentato il raggio per allontanare i numeri dalle lineette
+                // Da radius - 28 a radius - 38 (10 pixel più lontano)
+                const labelRadius = radius - 38;
                 
                 // Calculate position
                 const x = centerX + Math.cos(angleRad) * labelRadius;
@@ -471,8 +472,8 @@
             
             if (state.currentScale !== newScale) {
                 state.currentScale = newScale;
-                state.hourScale = newScale / 12; // 20k or 10k per hour
-                state.minuteScale = state.hourScale / 10; // 2k or 1k per full minute circle
+                state.hourScale = newScale / 12;
+                state.minuteScale = state.hourScale / 10;
                 
                 // Update labels
                 updatePriceLabels();
