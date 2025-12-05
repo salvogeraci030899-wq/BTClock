@@ -232,6 +232,15 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             width: 100%;
+            line-height: 1.6;
+        }
+
+        /* Stile per il credito del creatore */
+        .creator-credit {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 0.8px;
         }
 
         @keyframes fadeInUp {
@@ -602,6 +611,10 @@
             .copy-success-message {
                 font-size: 0.75rem;
             }
+            
+            .creator-credit {
+                font-size: 0.65rem;
+            }
         }
 
         /* Small landscape devices */
@@ -668,8 +681,10 @@
                 </div>
             </div>
             
+            <!-- AGGIUNTO IL CREDITO DEL CREATORE SOTTO "Thank you for your support" -->
             <div class="donation-footer">
                 Thank you for your support
+                <div class="creator-credit">Created by Salvatore Geraci, Italy</div>
             </div>
         </div>
     </div>
@@ -809,11 +824,37 @@
             elements.closeDonationBottom.addEventListener('click', toggleDonationOverlay);
             elements.closeDonationBottom.addEventListener('touchstart', toggleDonationOverlay);
             
-            // Copy BTC address functionality - SOLUZIONE MIGLIORATA
-            elements.btcAddressContainer.addEventListener('click', copyBTCAddress);
-            elements.btcAddressContainer.addEventListener('touchstart', function(e) {
+            // Copy BTC address functionality - SOLUZIONE MIGLIORATA E FUNZIONANTE
+            let copyInProgress = false;
+            
+            elements.btcAddressContainer.addEventListener('click', async function(e) {
                 e.preventDefault();
-                copyBTCAddress();
+                e.stopPropagation();
+                
+                if (copyInProgress) return;
+                copyInProgress = true;
+                
+                await copyBTCAddress();
+                
+                // Piccolo delay per prevenire click multipli
+                setTimeout(() => {
+                    copyInProgress = false;
+                }, 500);
+            });
+            
+            elements.btcAddressContainer.addEventListener('touchstart', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (copyInProgress) return;
+                copyInProgress = true;
+                
+                await copyBTCAddress();
+                
+                // Piccolo delay per prevenire touch multipli
+                setTimeout(() => {
+                    copyInProgress = false;
+                }, 500);
             });
             
             // Close on escape key
@@ -851,81 +892,98 @@
             }
         }
 
-        // FUNZIONE MIGLIORATA PER COPIARE L'INDIRIZZO BTC
-        async function copyBTCAddress(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
+        // FUNZIONE AGGIORNATA PER COPIARE L'INDIRIZZO BTC - ORA FUNZIONA
+        async function copyBTCAddress() {
             // Reset any previous message
             elements.copySuccessMessage.classList.remove('show');
             
-            // Primo tentativo: usa l'API Clipboard moderna se disponibile
+            // Forza la selezione del testo su mobile
+            const addressElement = elements.btcAddress;
+            const range = document.createRange();
+            range.selectNodeContents(addressElement);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Primo tentativo: usa l'API Clipboard moderna
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
                     await navigator.clipboard.writeText(CONFIG.BTC_ADDRESS);
                     showCopySuccess();
+                    selection.removeAllRanges();
                     return;
                 } catch (err) {
-                    console.log('Clipboard API fallita, provo metodo legacy...');
+                    console.log('Modern Clipboard API failed, trying legacy method...');
                 }
             }
             
-            // Secondo tentativo: metodo legacy
-            const textArea = document.createElement('textarea');
-            textArea.value = CONFIG.BTC_ADDRESS;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            textArea.style.top = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
+            // Secondo tentativo: metodo legacy con textarea
             try {
+                const textArea = document.createElement('textarea');
+                textArea.value = CONFIG.BTC_ADDRESS;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                
+                // Forza il focus e la selezione
+                textArea.focus();
+                textArea.select();
+                
+                // Usa document.execCommand per copiare
                 const successful = document.execCommand('copy');
+                
                 if (successful) {
                     showCopySuccess();
                 } else {
-                    // Terzo tentativo: per dispositivi mobili
+                    // Terzo tentativo: metodo alternativo per iOS
                     fallbackMobileCopy();
                 }
-            } catch (err) {
-                console.error('Fallback copy failed:', err);
-                fallbackMobileCopy();
-            } finally {
+                
                 document.body.removeChild(textArea);
+                selection.removeAllRanges();
+                
+            } catch (err) {
+                console.error('Legacy copy method failed:', err);
+                
+                // Fallback per dispositivi mobili
+                fallbackMobileCopy();
+                selection.removeAllRanges();
             }
         }
 
-        // Fallback per dispositivi mobili
+        // Fallback per dispositivi mobili (specialmente iOS)
         function fallbackMobileCopy() {
-            // Crea un elemento input temporaneo
-            const input = document.createElement('input');
-            input.setAttribute('type', 'text');
-            input.setAttribute('value', CONFIG.BTC_ADDRESS);
-            input.style.position = 'absolute';
-            input.style.left = '-1000px';
-            input.style.top = '0';
-            document.body.appendChild(input);
-            
-            // Seleziona il testo
-            input.select();
-            input.setSelectionRange(0, CONFIG.BTC_ADDRESS.length);
-            
             try {
+                // Crea un elemento input temporaneo
+                const input = document.createElement('input');
+                input.setAttribute('type', 'text');
+                input.setAttribute('value', CONFIG.BTC_ADDRESS);
+                input.style.position = 'absolute';
+                input.style.left = '-1000px';
+                input.style.opacity = '0';
+                document.body.appendChild(input);
+                
+                // Seleziona il testo
+                input.select();
+                input.setSelectionRange(0, CONFIG.BTC_ADDRESS.length);
+                
+                // Prova a copiare
                 const successful = document.execCommand('copy');
+                
                 if (successful) {
                     showCopySuccess();
                 } else {
                     // Se tutto fallisce, mostra comunque il messaggio per UX
                     showCopySuccess();
                 }
+                
+                document.body.removeChild(input);
+                
             } catch (err) {
                 console.error('Mobile copy fallback failed:', err);
-                showCopySuccess(); // Mostra comunque il feedback per UX
-            } finally {
-                document.body.removeChild(input);
+                // Mostra comunque il feedback visivo per UX
+                showCopySuccess();
             }
         }
 
@@ -943,7 +1001,7 @@
             
             // Vibrazione su dispositivi mobili (se supportata)
             if (navigator.vibrate) {
-                navigator.vibrate(50);
+                navigator.vibrate([50, 50, 50]);
             }
             
             // Resetta gli stili dopo 2 secondi
