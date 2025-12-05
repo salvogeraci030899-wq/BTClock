@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BITCLOCK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Rotation overlay - black screen during orientation change */
+        .rotation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 9999;
+            display: none;
+        }
+
+        /* Donation Overlay */
+        .donation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .donation-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .donation-content {
+            max-width: 500px;
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+            animation: fadeInUp 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .donation-title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            text-align: center;
+            width: 100%;
+        }
+
+        .donation-section {
+            margin-bottom: 40px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .donation-subtitle {
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            text-align: center;
+            width: 100%;
+        }
+
+        .btc-address-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: 90%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btc-address-container:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btc-address-container:active {
+            transform: scale(0.98);
+        }
+
+        .btc-address {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            color: #f2a900;
+            word-break: break-all;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .copy-hint {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-align: center;
+            width: 100%;
+        }
+
+        .copy-success {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(242, 169, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #f2a900;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+            animation: copyPulse 2s ease;
+        }
+
+        .copy-success.show {
+            opacity: 1;
+        }
+
+        .donation-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .donation-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* Rimosso la X di chiusura in alto a destra */
+        .close-donation-top {
+            display: none;
+        }
+
+        .donation-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes copyPulse {
+            0% {
+                background: rgba(242, 169, 0, 0);
+            }
+            20% {
+                background: rgba(242, 169, 0, 0.25);
+            }
+            100% {
+                background: rgba(242, 169, 0, 0.15);
+            }
+        }
+
+        @keyframes copyText {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .title {
+            position: absolute;
+            top: 40px;
+            font-weight: 300;
+            font-size: 2.2rem;
+            letter-spacing: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            z-index: 1000;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .title:hover {
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .clock-wrapper {
+            position: relative;
+            width: 85vmin;
+            height: 85vmin;
+            max-width: 500px;
+            max-height: 500px;
+            min-width: 300px;
+            min-height: 300px;
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+
+        /* Clock container - will be completely recreated */
+        .clock-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* Perfect clock face */
+        .clock-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 50%;
+            transition: border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Clock face active state - subtle illumination */
+        .clock-face.active {
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
+                        inset 0 0 20px rgba(255, 255, 255, 0.04);
+        }
+
+        /* Perfect tick marks */
+        .tick {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            transform-origin: 0% 0%;
+        }
+
+        .tick-hour {
+            width: 1.5px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .tick-five {
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .tick-minute {
+            width: 0.5px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Price labels */
+        .price-label {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+            transform: translate(-50%, -50%);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* BTC label */
+        .btc-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Hands */
+        .hands-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .hand {
+            position: absolute;
+            transform-origin: 50% 100%;
+            left: 50%;
+            bottom: 50%;
+            border-radius: 1px;
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1);
+            transform: translateX(-50%) rotate(0deg);
+        }
+
+        .hour-hand {
+            width: 2.2px;
+            height: 26%;
+            background: #ffffff;
+            z-index: 2;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+        }
+
+        .minute-hand {
+            width: 1.2px;
+            height: 36%;
+            background: #ffffff;
+            z-index: 3;
+        }
+
+        .center-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        }
+
+        /* Price display */
+        .price-display {
+            position: absolute;
+            bottom: 50px;
+            text-align: center;
+        }
+
+        .current-price {
+            font-size: 2.6rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        }
+
+        .price-details {
+            margin-top: 12px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .detail {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            font-weight: 300;
+            font-family: 'SF Mono', monospace;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .positive {
+            color: #00ff9d;
+        }
+
+        .negative {
+            color: #ff4d4d;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        /* Status indicator */
+        .status {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        /* Touch cooldown indicator */
+        .cooldown-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 94%;
+            height: 94%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cooldown-indicator.active {
+            opacity: 0.15;
+        }
+
+        /* Landscape mode - only title visible */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .title {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) !important;
+                font-size: 4rem;
+                letter-spacing: 12px;
+            }
+
+            .clock-wrapper,
+            .price-display,
+            .status,
+            .btc-label,
+            .loading {
+                display: none !important;
+            }
+        }
+
+        /* Portrait mode adjustments */
+        @media (max-width: 600px) and (orientation: portrait) {
+            .clock-wrapper {
+                width: 90vmin;
+                height: 90vmin;
+            }
+            
+            .title {
+                font-size: 1.8rem;
+                letter-spacing: 6px;
+                top: 30px;
+            }
+            
+            .current-price {
+                font-size: 2.2rem;
+            }
+            
+            .price-display {
+                bottom: 40px;
+            }
+            
+            .btc-label {
+                bottom: -22px;
+                font-size: 12px;
+            }
+
+            .donation-title {
+                font-size: 1.5rem;
+                letter-spacing: 3px;
+                margin-bottom: 30px;
+            }
+
+            .donation-subtitle {
+                font-size: 1rem;
+            }
+
+            .btc-address {
+                font-size: 0.85rem;
+            }
+
+            .btc-address-container {
+                width: 85%;
+                padding: 15px;
+            }
+
+            .donation-content {
+                padding: 15px;
+            }
+
+            .donation-button {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                min-width: 180px;
+            }
+        }
+
+        /* Small landscape devices */
+        @media (orientation: landscape) and (max-height: 400px) {
+            .title {
+                font-size: 3rem;
+                letter-spacing: 10px;
+            }
+        }
+
+        /* Donation page in landscape - hide it */
+        @media (orientation: landscape) {
+            .donation-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Disable all interactions */
+        *:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="rotation-overlay"></div>
+    
+    <!-- Donation Overlay -->
+    <div class="donation-overlay" id="donationOverlay">
+        <div class="close-donation-top" id="closeDonationTop">×</div>
+        
+        <div class="donation-content">
+            <h2 class="donation-title">Support BITCLOCK</h2>
+            
+            <div class="donation-section">
+                <h3 class="donation-subtitle">Bitcoin Donation</h3>
+                <div class="btc-address-container" id="btcAddressContainer">
+                    <div class="btc-address" id="btcAddress">
+                        bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+                    </div>
+                    <div class="copy-hint">Tap to copy address</div>
+                    <div class="copy-success" id="copySuccess">✓ Address Copied!</div>
+                </div>
+            </div>
+            
+            <div class="donation-section">
+                <h3 class="donation-subtitle">Other Ways to Support</h3>
+                <div class="button-group">
+                    <a href="https://buymeacoffee.com" target="_blank" rel="noopener" class="donation-button">
+                        Buy Me a Coffee
+                    </a>
+                    <button class="donation-button" id="closeDonationBottom">
+                        Close
+                    </button>
+                </div>
+            </div>
+            
+            <div class="donation-footer">
+                Thank you for your support
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h1 class="title" id="pageTitle">BITCLOCK</h1>
+        
+        <div class="clock-wrapper">
+            <!-- Clock container will be dynamically created -->
+        </div>
+        
+        <div class="price-display">
+            <div class="current-price">$<span id="currentPrice">00,000</span></div>
+            
+            <div class="price-details">
+                <div class="detail">
+                    <div class="detail-label">Change</div>
+                    <div class="detail-value positive" id="priceChange">+0.00%</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Range</div>
+                    <div class="detail-value" id="hourRange">$00k-00k</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status" id="status">Live</div>
+    </div>
+
+    <script>
+        // Prevent all interactions except clock touch
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        });
+        
+        // Configuration
+        const CONFIG = {
+            API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
+            UPDATE_INTERVAL: 30000,
+            MANUAL_UPDATE_COOLDOWN: 10000, // 10 seconds cooldown for manual updates
+            BTC_ADDRESS: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+        };
+
+        // State
+        let state = {
+            price: 34750,
+            change: 0,
+            isLive: false,
+            isLoading: true,
+            currentScale: 120000,
+            hourScale: 10000,
+            minuteScale: 1000,
+            isLandscape: window.innerHeight <= 600 && window.innerWidth > window.innerHeight,
+            animationFrameId: null,
+            canManuallyUpdate: true,
+            lastManualUpdate: 0,
+            donationOverlayVisible: false
+        };
+
+        // DOM Elements
+        const elements = {
+            currentPrice: document.getElementById('currentPrice'),
+            priceChange: document.getElementById('priceChange'),
+            hourRange: document.getElementById('hourRange'),
+            status: document.getElementById('status'),
+            title: document.querySelector('.title'),
+            priceDisplay: document.querySelector('.price-display'),
+            btcLabel: null,
+            clockWrapper: document.querySelector('.clock-wrapper'),
+            overlay: document.querySelector('.rotation-overlay'),
+            clockContainer: null,
+            hourHand: null,
+            minuteHand: null,
+            clockFace: null,
+            cooldownIndicator: null,
+            // Donation elements
+            donationOverlay: document.getElementById('donationOverlay'),
+            closeDonationTop: document.getElementById('closeDonationTop'),
+            closeDonationBottom: document.getElementById('closeDonationBottom'),
+            btcAddressContainer: document.getElementById('btcAddressContainer'),
+            btcAddress: document.getElementById('btcAddress'),
+            copySuccess: document.getElementById('copySuccess'),
+            pageTitle: document.getElementById('pageTitle')
+        };
+
+        // Setup donation page
+        function setupDonationPage() {
+            // Set BTC address
+            elements.btcAddress.textContent = CONFIG.BTC_ADDRESS;
+            
+            // Title click to open donation (only in portrait)
+            elements.pageTitle.addEventListener('click', function(e) {
+                if (isPortraitMode()) {
+                    toggleDonationOverlay();
+                }
+            });
+            
+            elements.pageTitle.addEventListener('touchstart', function(e) {
+                if (isPortraitMode()) {
+                    toggleDonationOverlay();
+                }
+            });
+            
+            // Background click to open donation (outside clock, only in portrait)
+            document.addEventListener('click', function(e) {
+                // Don't open if clicking on clock or its children
+                if (e.target.closest('.clock-wrapper') || 
+                    e.target.closest('.price-display') || 
+                    e.target.closest('.status')) {
+                    return;
+                }
+                
+                // Don't open if already open or not in portrait
+                if (state.donationOverlayVisible || !isPortraitMode()) return;
+                
+                toggleDonationOverlay();
+            });
+            
+            // Close donation overlay - both buttons
+            elements.closeDonationTop.addEventListener('click', toggleDonationOverlay);
+            elements.closeDonationTop.addEventListener('touchstart', toggleDonationOverlay);
+            
+            elements.closeDonationBottom.addEventListener('click', toggleDonationOverlay);
+            elements.closeDonationBottom.addEventListener('touchstart', toggleDonationOverlay);
+            
+            // Copy BTC address functionality
+            elements.btcAddressContainer.addEventListener('click', copyBTCAddress);
+            elements.btcAddressContainer.addEventListener('touchstart', copyBTCAddress);
+            
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && state.donationOverlayVisible) {
+                    toggleDonationOverlay();
+                }
+            });
+        }
+
+        // Check if device is in portrait mode
+        function isPortraitMode() {
+            return window.innerHeight > window.innerWidth && window.innerHeight > 600;
+        }
+
+        function toggleDonationOverlay(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Only allow in portrait mode
+            if (!isPortraitMode() && !state.donationOverlayVisible) {
+                return;
+            }
+            
+            state.donationOverlayVisible = !state.donationOverlayVisible;
+            
+            if (state.donationOverlayVisible) {
+                elements.donationOverlay.classList.add('active');
+                // Prevent body scrolling
+                document.body.style.overflow = 'hidden';
+            } else {
+                elements.donationOverlay.classList.remove('active');
+                // Restore body scrolling
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function copyBTCAddress(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Create a temporary textarea to copy from
+            const textarea = document.createElement('textarea');
+            textarea.value = CONFIG.BTC_ADDRESS;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    // Visual feedback on the container
+                    elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
+                    elements.btcAddressContainer.style.borderColor = '#f2a900';
+                    elements.btcAddressContainer.style.boxShadow = '0 0 20px rgba(242, 169, 0, 0.2)';
+                    
+                    // Show success message
+                    elements.copySuccess.classList.add('show');
+                    
+                    // Animation for address text
+                    elements.btcAddress.style.animation = 'copyText 0.5s ease';
+                    
+                    // Reset styles after 2 seconds
+                    setTimeout(() => {
+                        elements.copySuccess.classList.remove('show');
+                        elements.btcAddressContainer.style.background = '';
+                        elements.btcAddressContainer.style.borderColor = '';
+                        elements.btcAddressContainer.style.boxShadow = '';
+                        elements.btcAddress.style.animation = '';
+                    }, 2000);
+                    
+                    // Optional: Vibrate on mobile
+                    if (navigator.vibrate) {
+                        navigator.vibrate([100, 50, 100]);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                // Fallback error message
+                const originalText = elements.copySuccess.textContent;
+                elements.copySuccess.textContent = 'Copy failed!';
+                elements.copySuccess.style.color = '#ff4d4d';
+                elements.copySuccess.classList.add('show');
+                
+                setTimeout(() => {
+                    elements.copySuccess.classList.remove('show');
+                    elements.copySuccess.textContent = originalText;
+                    elements.copySuccess.style.color = '#f2a900';
+                }, 2000);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+
+        // Touch/click handler for manual update
+        function setupTouchHandler() {
+            if (!elements.clockWrapper || state.isLandscape) return;
+            
+            // Remove existing listeners
+            elements.clockWrapper.removeEventListener('click', handleClockTouch);
+            elements.clockWrapper.removeEventListener('touchstart', handleClockTouch);
+            
+            // Add new listeners
+            elements.clockWrapper.addEventListener('click', handleClockTouch);
+            elements.clockWrapper.addEventListener('touchstart', handleClockTouch);
+        }
+
+        function handleClockTouch(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Don't trigger in landscape mode
+            if (state.isLandscape) return;
+            
+            // Check cooldown
+            const now = Date.now();
+            const timeSinceLastUpdate = now - state.lastManualUpdate;
+            
+            if (!state.canManuallyUpdate || timeSinceLastUpdate < CONFIG.MANUAL_UPDATE_COOLDOWN) {
+                // Show brief feedback that update is on cooldown
+                if (elements.clockFace) {
+                    elements.clockFace.classList.add('active');
+                    setTimeout(() => {
+                        elements.clockFace.classList.remove('active');
+                    }, 300);
+                }
+                return;
+            }
+            
+            // Set cooldown
+            state.canManuallyUpdate = false;
+            state.lastManualUpdate = now;
+            
+            // Show visual feedback
+            if (elements.clockFace) {
+                elements.clockFace.classList.add('active');
+                setTimeout(() => {
+                    elements.clockFace.classList.remove('active');
+                }, 800); // Match the transition duration
+            }
+            
+            // Show cooldown indicator briefly
+            if (elements.cooldownIndicator) {
+                elements.cooldownIndicator.classList.add('active');
+                setTimeout(() => {
+                    elements.cooldownIndicator.classList.remove('active');
+                }, 500);
+            }
+            
+            // Update status
+            elements.status.textContent = 'Updating...';
+            elements.status.style.opacity = '0.5';
+            
+            // Trigger price update
+            fetchPrice();
+            
+            // Re-enable manual update after cooldown
+            setTimeout(() => {
+                state.canManuallyUpdate = true;
+            }, CONFIG.MANUAL_UPDATE_COOLDOWN);
+        }
+
+        // Orientation change handling
+        let orientationChangeTimeout;
+        let lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+
+        function handleOrientationChange() {
+            const currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+            
+            // Only show overlay if orientation actually changed
+            if (currentOrientation !== lastOrientation) {
+                // Show black overlay
+                elements.overlay.style.display = 'block';
+                
+                // Clear any existing timeout
+                if (orientationChangeTimeout) {
+                    clearTimeout(orientationChangeTimeout);
+                }
+                
+                // Hide overlay after 1 second and completely recreate everything
+                orientationChangeTimeout = setTimeout(() => {
+                    elements.overlay.style.display = 'none';
+                    
+                    // Stop animation
+                    if (state.animationFrameId) {
+                        cancelAnimationFrame(state.animationFrameId);
+                        state.animationFrameId = null;
+                    }
+                    
+                    // Completely destroy and recreate clock
+                    destroyClock();
+                    updateOrientationDisplay();
+                    createClock();
+                    
+                    // Setup touch handler
+                    setupTouchHandler();
+                    
+                    // Restart animation if in portrait mode
+                    if (!state.isLandscape) {
+                        requestAnimationFrame(updateClock);
+                    }
+                    
+                    lastOrientation = currentOrientation;
+                }, 1000);
+            }
+        }
+
+        // Completely destroy clock
+        function destroyClock() {
+            // Clear clock wrapper
+            elements.clockWrapper.innerHTML = '';
+            
+            // Reset references
+            elements.clockContainer = null;
+            elements.hourHand = null;
+            elements.minuteHand = null;
+            elements.btcLabel = null;
+            elements.clockFace = null;
+            elements.cooldownIndicator = null;
+        }
+
+        // Create complete clock from scratch
+        function createClock() {
+            if (state.isLandscape) return;
+            
+            // Create clock container
+            elements.clockContainer = document.createElement('div');
+            elements.clockContainer.className = 'clock-container';
+            elements.clockWrapper.appendChild(elements.clockContainer);
+            
+            // Create clock face
+            elements.clockFace = document.createElement('div');
+            elements.clockFace.className = 'clock-face';
+            elements.clockContainer.appendChild(elements.clockFace);
+            
+            // Create cooldown indicator
+            elements.cooldownIndicator = document.createElement('div');
+            elements.cooldownIndicator.className = 'cooldown-indicator';
+            elements.clockContainer.appendChild(elements.cooldownIndicator);
+            
+            // Create ticks and labels
+            createPerfectTicks();
+            
+            // Create BTC label
+            elements.btcLabel = document.createElement('div');
+            elements.btcLabel.className = 'btc-label';
+            elements.btcLabel.textContent = 'BTC';
+            elements.clockContainer.appendChild(elements.btcLabel);
+            
+            // Create hands container
+            const handsContainer = document.createElement('div');
+            handsContainer.className = 'hands-container';
+            elements.clockContainer.appendChild(handsContainer);
+            
+            // Create hour hand
+            elements.hourHand = document.createElement('div');
+            elements.hourHand.className = 'hand hour-hand';
+            handsContainer.appendChild(elements.hourHand);
+            
+            // Create minute hand
+            elements.minuteHand = document.createElement('div');
+            elements.minuteHand.className = 'hand minute-hand';
+            handsContainer.appendChild(elements.minuteHand);
+            
+            // Create center dot
+            const centerDot = document.createElement('div');
+            centerDot.className = 'center-dot';
+            elements.clockContainer.appendChild(centerDot);
+            
+            // Create loading element
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.textContent = 'Loading';
+            elements.clockContainer.appendChild(loading);
+            
+            // Hide loading if data already loaded
+            if (!state.isLoading) {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Update display based on orientation
+        function updateOrientationDisplay() {
+            const isLandscape = window.innerHeight <= 600 && window.innerWidth > window.innerHeight;
+            state.isLandscape = isLandscape;
+            
+            if (isLandscape) {
+                // Landscape mode - only show title centered
+                elements.title.style.position = 'fixed';
+                elements.title.style.top = '50%';
+                elements.title.style.left = '50%';
+                elements.title.style.transform = 'translate(-50%, -50%)';
+                elements.title.style.fontSize = window.innerHeight <= 400 ? '3rem' : '4rem';
+                elements.title.style.letterSpacing = window.innerHeight <= 400 ? '10px' : '12px';
+                elements.title.style.display = 'block';
+                
+                // Hide all other elements
+                elements.clockWrapper.style.display = 'none';
+                elements.priceDisplay.style.display = 'none';
+                elements.status.style.display = 'none';
+            } else {
+                // Portrait mode - show everything
+                elements.title.style.position = 'absolute';
+                elements.title.style.top = '40px';
+                elements.title.style.left = '50%';
+                elements.title.style.transform = 'translateX(-50%)';
+                elements.title.style.fontSize = window.innerWidth <= 600 ? '1.8rem' : '2.2rem';
+                elements.title.style.letterSpacing = window.innerWidth <= 600 ? '6px' : '8px';
+                elements.title.style.display = 'block';
+                
+                // Show all other elements
+                elements.clockWrapper.style.display = 'block';
+                elements.priceDisplay.style.display = 'block';
+                elements.status.style.display = 'block';
+            }
+        }
+
+        // Create perfect tick marks
+        function createPerfectTicks() {
+            if (!elements.clockContainer || state.isLandscape) return;
+            
+            const container = elements.clockContainer;
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 10;
+            
+            // Create 60 tick marks with precision
+            for (let i = 0; i < 60; i++) {
+                const tick = document.createElement('div');
+                const angle = (i * 6) * (Math.PI / 180);
+                
+                // Calculate position
+                const x = centerX + Math.sin(angle) * (radius - 1);
+                const y = centerY - Math.cos(angle) * (radius - 1);
+                
+                // Determine tick type
+                if (i % 15 === 0) {
+                    tick.className = 'tick tick-hour';
+                } else if (i % 5 === 0) {
+                    tick.className = 'tick tick-five';
+                } else {
+                    tick.className = 'tick tick-minute';
+                }
+                
+                // Position tick
+                tick.style.left = `${x}px`;
+                tick.style.top = `${y}px`;
+                
+                // Rotate tick
+                const rotation = i * 6;
+                tick.style.transform = `rotate(${rotation}deg)`;
+                tick.style.transformOrigin = '0% 0%';
+                
+                container.appendChild(tick);
+            }
+
+            // Create price labels
+            updatePriceLabels();
+        }
+
+        // Update price labels based on current scale
+        function updatePriceLabels() {
+            if (!elements.clockContainer || state.isLandscape) return;
+            
+            // Remove existing labels if any
+            const existingLabels = elements.clockContainer.querySelectorAll('.price-label');
+            existingLabels.forEach(el => el.remove());
+            
+            const width = elements.clockContainer.offsetWidth;
+            const height = elements.clockContainer.offsetHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 10;
+            
+            // Determine label values based on scale
+            let labels;
+            if (state.currentScale === 120000) {
+                labels = [
+                    { angle: -90, text: '120k', value: 120000 },
+                    { angle: 0, text: '30k', value: 30000 },
+                    { angle: 90, text: '60k', value: 60000 },
+                    { angle: 180, text: '90k', value: 90000 }
+                ];
+            } else {
+                labels = [
+                    { angle: -90, text: '240k', value: 240000 },
+                    { angle: 0, text: '150k', value: 150000 },
+                    { angle: 90, text: '180k', value: 180000 },
+                    { angle: 180, text: '210k', value: 210000 }
+                ];
+            }
+
+            // Create new labels
+            labels.forEach(label => {
+                const labelEl = document.createElement('div');
+                labelEl.className = 'price-label';
+                labelEl.textContent = label.text;
+                
+                // Convert angle to radians
+                const angleRad = label.angle * (Math.PI / 180);
+                
+                // Distance from center
+                const labelRadius = radius - 48;
+                
+                // Calculate position
+                const x = centerX + Math.cos(angleRad) * labelRadius;
+                const y = centerY + Math.sin(angleRad) * labelRadius;
+                
+                labelEl.style.left = `${x}px`;
+                labelEl.style.top = `${y}px`;
+                
+                elements.clockContainer.appendChild(labelEl);
+            });
+        }
+
+        // Update scale based on price
+        function updateScale(price) {
+            const newScale = price >= 120000 ? 240000 : 120000;
+            
+            if (state.currentScale !== newScale) {
+                state.currentScale = newScale;
+                state.hourScale = newScale / 12;
+                state.minuteScale = state.hourScale / 10;
+                
+                // Update labels
+                updatePriceLabels();
+            }
+        }
+
+        // Initialize
+        async function init() {
+            // Setup donation page
+            setupDonationPage();
+            
+            // Initial setup
+            updateOrientationDisplay();
+            createClock();
+            
+            // Setup touch handler
+            setupTouchHandler();
+            
+            // Listen for orientation changes
+            window.addEventListener('resize', handleOrientationChange);
+            
+            // Initial data fetch
+            await fetchPrice();
+            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
+            
+            // Start clock animation if in portrait
+            if (!state.isLandscape) {
+                requestAnimationFrame(updateClock);
+            }
+        }
+
+        // Fetch Bitcoin price
+        async function fetchPrice() {
+            try {
+                elements.status.textContent = 'Updating...';
+                elements.status.style.opacity = '0.5';
+                
+                const response = await fetch(CONFIG.API_URL);
+                const data = await response.json();
+                
+                state.price = data.bitcoin.usd;
+                state.change = data.bitcoin.usd_24h_change;
+                state.isLive = true;
+                state.isLoading = false;
+                
+                // Update scale if needed
+                updateScale(state.price);
+                
+                // Hide loading
+                if (elements.clockContainer) {
+                    const loading = elements.clockContainer.querySelector('.loading');
+                    if (loading) loading.style.display = 'none';
+                }
+                
+                elements.status.textContent = 'Live';
+                elements.status.style.opacity = '0.25';
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                
+                // Fallback to simulated data
+                state.price += (Math.random() - 0.5) * 800;
+                state.change = (Math.random() - 0.5) * 4;
+                state.isLive = false;
+                state.isLoading = false;
+                
+                // Update scale if needed
+                updateScale(state.price);
+                
+                // Hide loading
+                if (elements.clockContainer) {
+                    const loading = elements.clockContainer.querySelector('.loading');
+                    if (loading) loading.style.display = 'none';
+                }
+                
+                elements.status.textContent = 'Simulated';
+                elements.status.style.opacity = '0.15';
+            }
+        }
+
+        // Update clock hands
+        function updateClock() {
+            if (state.isLoading || state.isLandscape || !elements.hourHand || !elements.minuteHand) {
+                // Don't update clock in landscape mode, while loading, or if elements don't exist
+                state.animationFrameId = requestAnimationFrame(updateClock);
+                return;
+            }
+
+            // Normalize price to current scale
+            const normalizedPrice = state.price % state.currentScale;
+            
+            // Calculate hour hand position
+            const hourValue = normalizedPrice / state.hourScale;
+            const hourAngle = hourValue * 30;
+            
+            // Calculate minute hand position
+            const remainder = normalizedPrice % state.hourScale;
+            const minuteValue = remainder / state.minuteScale;
+            const minuteAngle = (minuteValue * 360) % 360;
+            
+            // Apply rotations
+            elements.hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+            elements.minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+            
+            // Update minute hand color
+            updateMinuteHandColor();
+            
+            // Update display
+            updateDisplay(hourValue, remainder);
+            
+            state.animationFrameId = requestAnimationFrame(updateClock);
+        }
+
+        // Update minute hand color
+        function updateMinuteHandColor() {
+            if (!elements.minuteHand) return;
+            
+            if (state.change >= 0) {
+                elements.minuteHand.style.background = '#00ff9d';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(0, 255, 157, 0.5)';
+            } else {
+                elements.minuteHand.style.background = '#ff4d4d';
+                elements.minuteHand.style.boxShadow = '0 0 8px rgba(255, 77, 77, 0.5)';
+            }
+        }
+
+        // Update display
+        function updateDisplay(hourValue, remainder) {
+            // Format price
+            const priceStr = state.price.toLocaleString('en-US', {
+                minimumIntegerDigits: 5,
+                useGrouping: true
+            });
+            elements.currentPrice.textContent = priceStr.replace(/,/g, ',');
+            
+            // Format change
+            const changeFormatted = Math.abs(state.change).toFixed(2);
+            if (state.change >= 0) {
+                elements.priceChange.textContent = `+${changeFormatted}%`;
+                elements.priceChange.className = 'detail-value positive';
+            } else {
+                elements.priceChange.textContent = `-${changeFormatted}%`;
+                elements.priceChange.className = 'detail-value negative';
+            }
+            
+            // Calculate and display hour range
+            const currentHour = Math.floor(hourValue);
+            const rangeStart = currentHour * state.hourScale;
+            const rangeEnd = (currentHour + 1) * state.hourScale;
+            
+            // Format range text
+            let rangeText;
+            if (currentHour === 11) {
+                rangeText = `$${(rangeStart/1000).toFixed(0)}k-${(state.currentScale/1000).toFixed(0)}k`;
+            } else {
+                rangeText = `$${(rangeStart/1000).toFixed(0)}k-${(rangeEnd/1000).toFixed(0)}k`;
+            }
+            
+            elements.hourRange.textContent = rangeText;
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(init, 100);
+        });
+    </script>
+</body>
+</html>
