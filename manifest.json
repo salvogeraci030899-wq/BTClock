@@ -1,1 +1,21 @@
-
+{
+  "name": "BITCLOCK",
+  "short_name": "BITCLOCK",
+  "description": "A Bitcoin price clock that visualizes BTC price movements through an analog clock interface",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/BITCLOCK.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
