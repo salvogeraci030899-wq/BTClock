@@ -533,6 +533,41 @@
             font-size: 0.85rem;
             letter-spacing: 1px;
             font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            animation: loadingDot 1.4s infinite;
+            animation-delay: 0s;
+        }
+
+        .loading::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            animation: loadingDot 1.4s infinite;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes loadingDot {
+            0%, 60%, 100% { 
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            30% { 
+                transform: scale(1.5);
+                opacity: 1;
+            }
         }
 
         /* Status indicator */
@@ -544,6 +579,17 @@
             color: rgba(255, 255, 255, 0.25);
             letter-spacing: 1px;
             font-weight: 300;
+        }
+
+        .status.offline {
+            color: #ff4d4d;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.1; }
         }
 
         /* Touch cooldown indicator */
@@ -793,7 +839,7 @@
         // Configuration
         const CONFIG = {
             API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
-            UPDATE_INTERVAL: 30000,
+            UPDATE_INTERVAL: 15000, // Aggiornato a 15 secondi
             MANUAL_UPDATE_COOLDOWN: 10000, // 10 seconds cooldown for manual updates
             BTC_ADDRESS: 'bc1p8qttqw943pwcj7jag4remvx63qyycujuem93z72el2s9agp4v7xsehgsg0',
             BINANCE_REFERRAL: 'https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00CQ6FMX2C',
@@ -1512,9 +1558,29 @@
             // Listen for orientation changes
             window.addEventListener('resize', handleOrientationChange);
             
+            // Gestione dello stato di rete
+            window.addEventListener('online', () => {
+                elements.status.textContent = 'Reconnecting...';
+                elements.status.style.opacity = '0.5';
+                elements.status.classList.remove('offline');
+                fetchPrice();
+            });
+
+            window.addEventListener('offline', () => {
+                elements.status.textContent = 'Offline';
+                elements.status.style.opacity = '0.1';
+                elements.status.classList.add('offline');
+            });
+
             // Initial data fetch
             await fetchPrice();
-            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
+            
+            // Aggiorna ogni 15 secondi
+            setInterval(() => {
+                if (checkConnectivity()) {
+                    fetchPrice();
+                }
+            }, CONFIG.UPDATE_INTERVAL);
             
             // Start clock animation if in portrait
             if (!state.isLandscape) {
@@ -1522,53 +1588,137 @@
             }
         }
 
-        // Fetch Bitcoin price
+        // Controllo della connettività
+        function checkConnectivity() {
+            if (!navigator.onLine) {
+                elements.status.textContent = 'Offline';
+                elements.status.style.opacity = '0.1';
+                elements.status.classList.add('offline');
+                return false;
+            }
+            return true;
+        }
+
+        // Fetch Bitcoin price - VERSIONE MIGLIORATA
         async function fetchPrice() {
             try {
                 elements.status.textContent = 'Updating...';
                 elements.status.style.opacity = '0.5';
+
+                // PRIMA OPZIONE: CoinGecko API
+                const apiUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true';
                 
-                const response = await fetch(CONFIG.API_URL);
-                const data = await response.json();
+                // SECONDA OPZIONE: Binance API come fallback
+                const binanceUrl = 'https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT';
                 
-                state.price = data.bitcoin.usd;
-                state.change = data.bitcoin.usd_24h_change;
-                state.isLive = true;
-                state.isLoading = false;
+                let data = null;
                 
-                // Update scale if needed
-                updateScale(state.price);
-                
-                // Hide loading
-                if (elements.clockContainer) {
-                    const loading = elements.clockContainer.querySelector('.loading');
-                    if (loading) loading.style.display = 'none';
+                try {
+                    // Prova prima con CoinGecko
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        data = await response.json();
+                        
+                        // Verifica che i dati siano validi
+                        if (data.bitcoin && data.bitcoin.usd) {
+                            state.price = data.bitcoin.usd;
+                            state.change = data.bitcoin.usd_24h_change;
+                            state.isLive = true;
+                            state.isLoading = false;
+                            
+                            // Update scale if needed
+                            updateScale(state.price);
+                            
+                            // Hide loading
+                            if (elements.clockContainer) {
+                                const loading = elements.clockContainer.querySelector('.loading');
+                                if (loading) loading.style.display = 'none';
+                            }
+                            
+                            elements.status.textContent = 'Live';
+                            elements.status.style.opacity = '0.25';
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('CoinGecko API failed, trying Binance...');
                 }
                 
-                elements.status.textContent = 'Live';
-                elements.status.style.opacity = '0.25';
+                try {
+                    // Fallback a Binance API
+                    const response = await fetch(binanceUrl);
+                    
+                    if (response.ok) {
+                        const binanceData = await response.json();
+                        
+                        // Calcola il cambio percentuale dalle 24h
+                        const price = parseFloat(binanceData.lastPrice);
+                        const openPrice = parseFloat(binanceData.openPrice);
+                        const changePercent = ((price - openPrice) / openPrice) * 100;
+                        
+                        state.price = price;
+                        state.change = changePercent;
+                        state.isLive = true;
+                        state.isLoading = false;
+                        
+                        // Update scale if needed
+                        updateScale(state.price);
+                        
+                        // Hide loading
+                        if (elements.clockContainer) {
+                            const loading = elements.clockContainer.querySelector('.loading');
+                            if (loading) loading.style.display = 'none';
+                        }
+                        
+                        elements.status.textContent = 'Live (Binance)';
+                        elements.status.style.opacity = '0.25';
+                        return;
+                    }
+                } catch (error) {
+                    console.log('Binance API also failed, using fallback...');
+                }
+                
+                // Se entrambe le API falliscono, usa dati simulati
+                fallbackToSimulatedData();
                 
             } catch (error) {
-                console.error('API Error:', error);
-                
-                // Fallback to simulated data
-                state.price += (Math.random() - 0.5) * 800;
-                state.change = (Math.random() - 0.5) * 4;
-                state.isLive = false;
-                state.isLoading = false;
-                
-                // Update scale if needed
-                updateScale(state.price);
-                
-                // Hide loading
-                if (elements.clockContainer) {
-                    const loading = elements.clockContainer.querySelector('.loading');
-                    if (loading) loading.style.display = 'none';
-                }
-                
-                elements.status.textContent = 'Simulated';
-                elements.status.style.opacity = '0.15';
+                console.error('All API attempts failed:', error);
+                fallbackToSimulatedData();
             }
+        }
+
+        // Funzione di fallback per dati simulati
+        function fallbackToSimulatedData() {
+            // Usa un'ultimo prezzo noto come base
+            const basePrice = state.price || 34750;
+            
+            // Genera una variazione realistica (±2%)
+            const randomChange = (Math.random() - 0.5) * 4;
+            const changeAmount = basePrice * (randomChange / 100);
+            
+            state.price = basePrice + changeAmount;
+            state.change = randomChange;
+            state.isLive = false;
+            state.isLoading = false;
+            
+            // Update scale if needed
+            updateScale(state.price);
+            
+            // Hide loading
+            if (elements.clockContainer) {
+                const loading = elements.clockContainer.querySelector('.loading');
+                if (loading) loading.style.display = 'none';
+            }
+            
+            elements.status.textContent = 'Simulated';
+            elements.status.style.opacity = '0.15';
         }
 
         // Update clock hands
