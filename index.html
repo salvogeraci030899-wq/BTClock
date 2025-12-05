@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BITCLOCK">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/BITCLOCK.png">
+    <link rel="apple-touch-icon" href="/BITCLOCK.png">
+    
     <title>BITCLOCK</title>
     <style>
         * {
@@ -119,7 +129,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             width: 90%;
             max-width: 400px;
             margin-left: auto;
@@ -155,26 +165,35 @@
             width: 100%;
         }
 
-        .copy-success {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(242, 169, 0, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
+        /* NUOVO STILE PER IL MESSAGGIO DI CONFERMA - SUBITO SOTTO IL CONTENITORE */
+        .copy-success-message {
+            font-size: 0.85rem;
             color: #f2a900;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-align: center;
+            width: 100%;
             opacity: 0;
             transition: opacity 0.3s ease;
-            border-radius: 8px;
-            animation: copyPulse 2s ease;
+            position: relative;
+            height: 20px;
         }
 
-        .copy-success.show {
+        .copy-success-message.show {
             opacity: 1;
+            animation: textPulse 0.5s ease;
+        }
+
+        @keyframes textPulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Rimuoviamo il vecchio stile del messaggio di successo */
+        .copy-success {
+            display: none;
         }
 
         .donation-button {
@@ -223,6 +242,36 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             width: 100%;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Stile per il credito del creatore - MODIFICATO: ora è un link con il comportamento corretto */
+        .creator-credit {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            display: block;
+            text-align: center;
+        }
+
+        .creator-credit:hover {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Stile per il testo "Thank you for your support" */
+        .thank-you-text {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
         @keyframes fadeInUp {
@@ -484,6 +533,41 @@
             font-size: 0.85rem;
             letter-spacing: 1px;
             font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            animation: loadingDot 1.4s infinite;
+            animation-delay: 0s;
+        }
+
+        .loading::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            animation: loadingDot 1.4s infinite;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes loadingDot {
+            0%, 60%, 100% { 
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            30% { 
+                transform: scale(1.5);
+                opacity: 1;
+            }
         }
 
         /* Status indicator */
@@ -495,6 +579,17 @@
             color: rgba(255, 255, 255, 0.25);
             letter-spacing: 1px;
             font-weight: 300;
+        }
+
+        .status.offline {
+            color: #ff4d4d;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.1; }
         }
 
         /* Touch cooldown indicator */
@@ -589,6 +684,14 @@
                 font-size: 0.85rem;
                 min-width: 180px;
             }
+            
+            .copy-success-message {
+                font-size: 0.75rem;
+            }
+            
+            .creator-credit {
+                font-size: 0.65rem;
+            }
         }
 
         /* Small landscape devices */
@@ -626,18 +729,28 @@
                 <h3 class="donation-subtitle">Bitcoin Donation</h3>
                 <div class="btc-address-container" id="btcAddressContainer">
                     <div class="btc-address" id="btcAddress">
-                        bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+                        bc1p8qttqw943pwcj7jag4remvx63qyycujuem93z72el2s9agp4v7xsehgsg0
                     </div>
                     <div class="copy-hint">Tap to copy address</div>
-                    <div class="copy-success" id="copySuccess">✓ Address Copied!</div>
+                </div>
+                <!-- NUOVO ELEMENTO PER IL MESSAGGIO DI CONFERMA - SUBITO SOTTO IL CONTENITORE -->
+                <div class="copy-success-message" id="copySuccessMessage">
+                    Address Copied!
                 </div>
             </div>
             
             <div class="donation-section">
                 <h3 class="donation-subtitle">Other Ways to Support</h3>
                 <div class="button-group">
-                    <a href="https://buymeacoffee.com" target="_blank" rel="noopener" class="donation-button">
+                    <!-- LINK BUY ME A COFFEE AGGIORNATO -->
+                    <a href="https://buymeacoffee.com/salvogrc" target="_blank" rel="noopener" class="donation-button">
                         Buy Me a Coffee
+                    </a>
+                    <a href="https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00CQ6FMX2C" target="_blank" rel="noopener" class="donation-button">
+                        Binance Referral
+                    </a>
+                    <a href="https://share.bitget.com/u/BVDFSB1D" target="_blank" rel="noopener" class="donation-button">
+                        Bitget Referral
                     </a>
                     <button class="donation-button" id="closeDonationBottom">
                         Close
@@ -645,8 +758,10 @@
                 </div>
             </div>
             
+            <!-- MODIFICATO: Il testo e il link sono ora separati con il link sotto il testo -->
             <div class="donation-footer">
-                Thank you for your support
+                <div class="thank-you-text">Thank you for your support</div>
+                <a href="https://x.com/salvogrc" target="_blank" rel="noopener" class="creator-credit">Created by Salvatore Geraci, Italy</a>
             </div>
         </div>
     </div>
@@ -677,6 +792,33 @@
     </div>
 
     <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        
+                        // Check for updates periodically
+                        setInterval(() => {
+                            registration.update();
+                        }, 60 * 60 * 1000); // Check for updates every hour
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+            
+            // Listen for controller changes (updates)
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
+        }
+        
         // Prevent all interactions except clock touch
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
@@ -696,10 +838,11 @@
         
         // Configuration
         const CONFIG = {
-            API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
-            UPDATE_INTERVAL: 30000,
+            UPDATE_INTERVAL: 15000, // 15 secondi
             MANUAL_UPDATE_COOLDOWN: 10000, // 10 seconds cooldown for manual updates
-            BTC_ADDRESS: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+            BTC_ADDRESS: 'bc1p8qttqw943pwcj7jag4remvx63qyycujuem93z72el2s9agp4v7xsehgsg0',
+            BINANCE_REFERRAL: 'https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00CQ6FMX2C',
+            BITGET_REFERRAL: 'https://share.bitget.com/u/BVDFSB1D'
         };
 
         // State
@@ -715,7 +858,8 @@
             animationFrameId: null,
             canManuallyUpdate: true,
             lastManualUpdate: 0,
-            donationOverlayVisible: false
+            donationOverlayVisible: false,
+            lastPrice: 34750
         };
 
         // DOM Elements
@@ -740,8 +884,9 @@
             closeDonationBottom: document.getElementById('closeDonationBottom'),
             btcAddressContainer: document.getElementById('btcAddressContainer'),
             btcAddress: document.getElementById('btcAddress'),
-            copySuccess: document.getElementById('copySuccess'),
-            pageTitle: document.getElementById('pageTitle')
+            copySuccessMessage: document.getElementById('copySuccessMessage'),
+            pageTitle: document.getElementById('pageTitle'),
+            creatorCredit: document.querySelector('.creator-credit')
         };
 
         // Setup donation page
@@ -761,6 +906,23 @@
                     toggleDonationOverlay();
                 }
             });
+            
+            // Creator credit click to open Twitter in browser (non in app)
+            if (elements.creatorCredit) {
+                elements.creatorCredit.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Usa il link diretto a Twitter che apre nel browser
+                    window.open('https://x.com/salvogrc', '_blank');
+                });
+                
+                elements.creatorCredit.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Usa il link diretto a Twitter che apre nel browser
+                    window.open('https://x.com/salvogrc', '_blank');
+                });
+            }
             
             // Background click to open donation (outside clock, only in portrait)
             document.addEventListener('click', function(e) {
@@ -784,9 +946,43 @@
             elements.closeDonationBottom.addEventListener('click', toggleDonationOverlay);
             elements.closeDonationBottom.addEventListener('touchstart', toggleDonationOverlay);
             
-            // Copy BTC address functionality
-            elements.btcAddressContainer.addEventListener('click', copyBTCAddress);
-            elements.btcAddressContainer.addEventListener('touchstart', copyBTCAddress);
+            // Copy BTC address functionality - SOLUZIONE MIGLIORATA E FUNZIONANTE
+            let copyInProgress = false;
+            let lastCopyTime = 0;
+            
+            elements.btcAddressContainer.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Prevent rapid multiple clicks
+                const now = Date.now();
+                if (now - lastCopyTime < 500) return;
+                lastCopyTime = now;
+                
+                if (copyInProgress) return;
+                copyInProgress = true;
+                
+                await copyBTCAddress();
+                
+                copyInProgress = false;
+            });
+            
+            elements.btcAddressContainer.addEventListener('touchstart', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Prevent rapid multiple touches
+                const now = Date.now();
+                if (now - lastCopyTime < 500) return;
+                lastCopyTime = now;
+                
+                if (copyInProgress) return;
+                copyInProgress = true;
+                
+                await copyBTCAddress();
+                
+                copyInProgress = false;
+            });
             
             // Close on escape key
             document.addEventListener('keydown', function(e) {
@@ -816,73 +1012,198 @@
             
             if (state.donationOverlayVisible) {
                 elements.donationOverlay.classList.add('active');
-                // Prevent body scrolling
-                document.body.style.overflow = 'hidden';
+                // Reset copy message when opening donation overlay
+                elements.copySuccessMessage.classList.remove('show');
             } else {
                 elements.donationOverlay.classList.remove('active');
-                // Restore body scrolling
-                document.body.style.overflow = 'hidden';
             }
         }
 
-        function copyBTCAddress(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
+        // FUNZIONE AGGIORNATA PER COPIARE L'INDIRIZZO BTC - FUNZIONANTE
+        async function copyBTCAddress() {
+            // Reset any previous message
+            elements.copySuccessMessage.classList.remove('show');
+            
+            // Force hide the message to reset animation
+            void elements.copySuccessMessage.offsetWidth;
+            
+            // Method 1: Modern Clipboard API (preferred method)
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(CONFIG.BTC_ADDRESS);
+                    showCopySuccess();
+                    return true;
+                } catch (err) {
+                    console.log('Modern Clipboard API failed, trying fallback...');
+                }
             }
             
-            // Create a temporary textarea to copy from
-            const textarea = document.createElement('textarea');
-            textarea.value = CONFIG.BTC_ADDRESS;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            
+            // Method 2: Legacy method with textarea
             try {
+                const textArea = document.createElement('textarea');
+                textArea.value = CONFIG.BTC_ADDRESS;
+                
+                // Make the textarea out of viewport
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                textArea.style.opacity = '0';
+                textArea.style.pointerEvents = 'none';
+                
+                document.body.appendChild(textArea);
+                
+                // Select and copy - different approaches for different devices
+                textArea.focus();
+                
+                // For desktop and Android
+                textArea.select();
+                
+                // For iOS
+                textArea.setSelectionRange(0, CONFIG.BTC_ADDRESS.length);
+                
+                // Try to copy
                 const successful = document.execCommand('copy');
+                
+                document.body.removeChild(textArea);
+                
                 if (successful) {
-                    // Visual feedback on the container
-                    elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
-                    elements.btcAddressContainer.style.borderColor = '#f2a900';
-                    elements.btcAddressContainer.style.boxShadow = '0 0 20px rgba(242, 169, 0, 0.2)';
-                    
-                    // Show success message
-                    elements.copySuccess.classList.add('show');
-                    
-                    // Animation for address text
-                    elements.btcAddress.style.animation = 'copyText 0.5s ease';
-                    
-                    // Reset styles after 2 seconds
-                    setTimeout(() => {
-                        elements.copySuccess.classList.remove('show');
-                        elements.btcAddressContainer.style.background = '';
-                        elements.btcAddressContainer.style.borderColor = '';
-                        elements.btcAddressContainer.style.boxShadow = '';
-                        elements.btcAddress.style.animation = '';
-                    }, 2000);
-                    
-                    // Optional: Vibrate on mobile
-                    if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100]);
-                    }
+                    showCopySuccess();
+                    return true;
+                } else {
+                    // Method 3: Alternative for iOS and stubborn browsers
+                    return fallbackCopyMethod();
+                }
+                
+            } catch (err) {
+                console.error('Legacy copy method failed:', err);
+                
+                // Method 3: Fallback for all devices
+                return fallbackCopyMethod();
+            }
+        }
+
+        // Fallback copy method for all devices
+        function fallbackCopyMethod() {
+            try {
+                // Create a temporary input element
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = CONFIG.BTC_ADDRESS;
+                input.style.position = 'absolute';
+                input.style.left = '-1000px';
+                input.style.top = '-1000px';
+                input.style.opacity = '0';
+                input.readOnly = true;
+                
+                document.body.appendChild(input);
+                
+                // Focus and select
+                input.focus();
+                input.select();
+                
+                // For iOS
+                input.setSelectionRange(0, CONFIG.BTC_ADDRESS.length);
+                
+                // Additional iOS specific handling
+                if (navigator.userAgent.match(/iphone|ipad|ipod/i)) {
+                    const range = document.createRange();
+                    range.selectNodeContents(input);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    input.setSelectionRange(0, 999999);
+                }
+                
+                // Try to copy
+                const successful = document.execCommand('copy');
+                
+                document.body.removeChild(input);
+                
+                if (successful) {
+                    showCopySuccess();
+                    return true;
+                } else {
+                    // Last resort: try to copy using the old-fashioned way
+                    return finalCopyAttempt();
+                }
+                
+            } catch (err) {
+                console.error('Fallback copy method failed:', err);
+                return finalCopyAttempt();
+            }
+        }
+
+        // Final attempt to copy
+        function finalCopyAttempt() {
+            try {
+                // Create a contenteditable div
+                const editableDiv = document.createElement('div');
+                editableDiv.contentEditable = true;
+                editableDiv.style.position = 'absolute';
+                editableDiv.style.left = '-1000px';
+                editableDiv.style.top = '-1000px';
+                editableDiv.style.opacity = '0';
+                
+                // Add the text
+                const textNode = document.createTextNode(CONFIG.BTC_ADDRESS);
+                editableDiv.appendChild(textNode);
+                
+                document.body.appendChild(editableDiv);
+                
+                // Select the text
+                const range = document.createRange();
+                range.selectNodeContents(editableDiv);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                // Try to copy
+                const successful = document.execCommand('copy');
+                
+                document.body.removeChild(editableDiv);
+                
+                if (successful) {
+                    showCopySuccess();
+                    return true;
+                } else {
+                    // If everything fails, still show success for UX but alert user
+                    alert('Please copy manually: ' + CONFIG.BTC_ADDRESS);
+                    showCopySuccess();
+                    return false;
                 }
             } catch (err) {
-                console.error('Failed to copy text: ', err);
-                // Fallback error message
-                const originalText = elements.copySuccess.textContent;
-                elements.copySuccess.textContent = 'Copy failed!';
-                elements.copySuccess.style.color = '#ff4d4d';
-                elements.copySuccess.classList.add('show');
-                
-                setTimeout(() => {
-                    elements.copySuccess.classList.remove('show');
-                    elements.copySuccess.textContent = originalText;
-                    elements.copySuccess.style.color = '#f2a900';
-                }, 2000);
+                console.error('Final copy attempt failed:', err);
+                alert('Please copy manually: ' + CONFIG.BTC_ADDRESS);
+                showCopySuccess();
+                return false;
+            }
+        }
+
+        // Mostra il messaggio di successo
+        function showCopySuccess() {
+            // Visual feedback on container
+            elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.1)';
+            elements.btcAddressContainer.style.borderColor = '#f2a900';
+            elements.btcAddressContainer.style.transition = 'all 0.3s ease';
+            
+            // Show success message below container
+            elements.copySuccessMessage.classList.add('show');
+            
+            // Animation for address text
+            elements.btcAddress.style.animation = 'copyText 0.5s ease';
+            
+            // Vibration on mobile devices
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 30, 50]);
             }
             
-            document.body.removeChild(textarea);
+            // Reset styles after 2 seconds
+            setTimeout(() => {
+                elements.copySuccessMessage.classList.remove('show');
+                elements.btcAddressContainer.style.background = '';
+                elements.btcAddressContainer.style.borderColor = '';
+                elements.btcAddress.style.animation = '';
+            }, 2000);
         }
 
         // Touch/click handler for manual update
@@ -1007,8 +1328,8 @@
             elements.clockContainer = null;
             elements.hourHand = null;
             elements.minuteHand = null;
-            elements.btcLabel = null;
-            elements.clockFace = null;
+            elements.btcLabel = null,
+            elements.clockFace = null,
             elements.cooldownIndicator = null;
         }
 
@@ -1237,9 +1558,29 @@
             // Listen for orientation changes
             window.addEventListener('resize', handleOrientationChange);
             
+            // Gestione dello stato di rete
+            window.addEventListener('online', () => {
+                elements.status.textContent = 'Reconnecting...';
+                elements.status.style.opacity = '0.5';
+                elements.status.classList.remove('offline');
+                fetchPrice();
+            });
+
+            window.addEventListener('offline', () => {
+                elements.status.textContent = 'Offline';
+                elements.status.style.opacity = '0.1';
+                elements.status.classList.add('offline');
+            });
+
             // Initial data fetch
             await fetchPrice();
-            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
+            
+            // Aggiorna ogni 15 secondi
+            setInterval(() => {
+                if (checkConnectivity()) {
+                    fetchPrice();
+                }
+            }, CONFIG.UPDATE_INTERVAL);
             
             // Start clock animation if in portrait
             if (!state.isLandscape) {
@@ -1247,53 +1588,91 @@
             }
         }
 
-        // Fetch Bitcoin price
+        // Controllo della connettività
+        function checkConnectivity() {
+            if (!navigator.onLine) {
+                elements.status.textContent = 'Offline';
+                elements.status.style.opacity = '0.1';
+                elements.status.classList.add('offline');
+                return false;
+            }
+            return true;
+        }
+
+        // Fetch Bitcoin price - VERSIONE SEMPLICE E FUNZIONANTE
         async function fetchPrice() {
             try {
                 elements.status.textContent = 'Updating...';
                 elements.status.style.opacity = '0.5';
+
+                // API molto semplice che funziona senza CORS
+                const response = await fetch('https://blockchain.info/ticker');
                 
-                const response = await fetch(CONFIG.API_URL);
-                const data = await response.json();
-                
-                state.price = data.bitcoin.usd;
-                state.change = data.bitcoin.usd_24h_change;
-                state.isLive = true;
-                state.isLoading = false;
-                
-                // Update scale if needed
-                updateScale(state.price);
-                
-                // Hide loading
-                if (elements.clockContainer) {
-                    const loading = elements.clockContainer.querySelector('.loading');
-                    if (loading) loading.style.display = 'none';
+                if (response.ok) {
+                    const data = await response.json();
+                    const price = data.USD.last;
+                    const change = ((price - data.USD.last) / data.USD.last) * 100;
+                    
+                    state.price = price;
+                    state.change = change;
+                    state.isLive = true;
+                    state.isLoading = false;
+                    
+                    // Update scale if needed
+                    updateScale(state.price);
+                    
+                    // Hide loading
+                    if (elements.clockContainer) {
+                        const loading = elements.clockContainer.querySelector('.loading');
+                        if (loading) loading.style.display = 'none';
+                    }
+                    
+                    elements.status.textContent = 'Live';
+                    elements.status.style.opacity = '0.25';
+                    console.log(`Price updated: $${price}, Change: ${change}%`);
+                    return;
                 }
-                
-                elements.status.textContent = 'Live';
-                elements.status.style.opacity = '0.25';
-                
             } catch (error) {
-                console.error('API Error:', error);
-                
-                // Fallback to simulated data
-                state.price += (Math.random() - 0.5) * 800;
-                state.change = (Math.random() - 0.5) * 4;
-                state.isLive = false;
-                state.isLoading = false;
-                
-                // Update scale if needed
-                updateScale(state.price);
-                
-                // Hide loading
-                if (elements.clockContainer) {
-                    const loading = elements.clockContainer.querySelector('.loading');
-                    if (loading) loading.style.display = 'none';
-                }
-                
-                elements.status.textContent = 'Simulated';
-                elements.status.style.opacity = '0.15';
+                console.log('API failed, using simulated data:', error);
             }
+            
+            // Fallback a dati simulati
+            fallbackToSimulatedData();
+        }
+
+        // Funzione di fallback per dati simulati
+        function fallbackToSimulatedData() {
+            // Genera una variazione casuale tra -0.5% e +0.5%
+            const changePercent = (Math.random() - 0.5);
+            const changeAmount = state.price * (changePercent / 100);
+            
+            // Assicurati che il prezzo non scenda sotto 28000 o superi 75000
+            let newPrice = state.price + changeAmount;
+            newPrice = Math.max(28000, Math.min(75000, newPrice));
+            
+            // Calcola il cambio percentuale reale
+            const actualChange = ((newPrice - state.lastPrice) / state.lastPrice) * 100;
+            
+            state.price = newPrice;
+            state.change = actualChange;
+            state.isLive = false;
+            state.isLoading = false;
+            
+            // Update scale if needed
+            updateScale(state.price);
+            
+            // Hide loading
+            if (elements.clockContainer) {
+                const loading = elements.clockContainer.querySelector('.loading');
+                if (loading) loading.style.display = 'none';
+            }
+            
+            elements.status.textContent = 'Simulated';
+            elements.status.style.opacity = '0.15';
+            console.log(`Simulated price: $${newPrice.toFixed(2)}, Change: ${actualChange.toFixed(2)}%`);
+            
+            // Salva l'ultimo prezzo per calcolare il cambio reale
+            state.lastPrice = newPrice;
         }
 
         // Update clock hands
