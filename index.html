@@ -77,6 +77,7 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
 
         .donation-title {
@@ -119,8 +120,10 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            width: 100%;
+            width: 90%;
             max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .btc-address-container:hover {
@@ -167,6 +170,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
             border-radius: 8px;
+            animation: copyPulse 2s ease;
         }
 
         .copy-success.show {
@@ -206,27 +210,9 @@
             margin-top: 20px;
         }
 
+        /* Rimosso la X di chiusura in alto a destra */
         .close-donation-top {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.2rem;
-            z-index: 10001;
-        }
-
-        .close-donation-top:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
+            display: none;
         }
 
         .donation-footer {
@@ -247,6 +233,33 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        @keyframes copyPulse {
+            0% {
+                background: rgba(242, 169, 0, 0);
+            }
+            20% {
+                background: rgba(242, 169, 0, 0.25);
+            }
+            100% {
+                background: rgba(242, 169, 0, 0.15);
+            }
+        }
+
+        @keyframes copyText {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
             }
         }
 
@@ -562,11 +575,13 @@
                 font-size: 0.85rem;
             }
 
-            .close-donation-top {
-                top: 20px;
-                right: 20px;
-                width: 35px;
-                height: 35px;
+            .btc-address-container {
+                width: 85%;
+                padding: 15px;
+            }
+
+            .donation-content {
+                padding: 15px;
             }
 
             .donation-button {
@@ -830,15 +845,21 @@
                     // Visual feedback on the container
                     elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
                     elements.btcAddressContainer.style.borderColor = '#f2a900';
+                    elements.btcAddressContainer.style.boxShadow = '0 0 20px rgba(242, 169, 0, 0.2)';
                     
                     // Show success message
                     elements.copySuccess.classList.add('show');
+                    
+                    // Animation for address text
+                    elements.btcAddress.style.animation = 'copyText 0.5s ease';
                     
                     // Reset styles after 2 seconds
                     setTimeout(() => {
                         elements.copySuccess.classList.remove('show');
                         elements.btcAddressContainer.style.background = '';
                         elements.btcAddressContainer.style.borderColor = '';
+                        elements.btcAddressContainer.style.boxShadow = '';
+                        elements.btcAddress.style.animation = '';
                     }, 2000);
                     
                     // Optional: Vibrate on mobile
@@ -848,6 +869,17 @@
                 }
             } catch (err) {
                 console.error('Failed to copy text: ', err);
+                // Fallback error message
+                const originalText = elements.copySuccess.textContent;
+                elements.copySuccess.textContent = 'Copy failed!';
+                elements.copySuccess.style.color = '#ff4d4d';
+                elements.copySuccess.classList.add('show');
+                
+                setTimeout(() => {
+                    elements.copySuccess.classList.remove('show');
+                    elements.copySuccess.textContent = originalText;
+                    elements.copySuccess.style.color = '#f2a900';
+                }, 2000);
             }
             
             document.body.removeChild(textarea);
