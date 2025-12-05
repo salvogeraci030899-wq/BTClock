@@ -825,19 +825,36 @@
             }
         }
 
-        // FIXED COPY FUNCTION - More reliable
-        function copyBTCAddress(e) {
+        // FIXED COPY FUNCTION - Modern Clipboard API
+        async function copyBTCAddress(e) {
             if (e) {
                 e.preventDefault();
                 e.stopPropagation();
             }
             
-            // Select the text first
-            const addressText = elements.btcAddress.textContent;
+            const addressText = CONFIG.BTC_ADDRESS;
             
-            // Create a temporary textarea element
+            try {
+                // Use the modern Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(addressText);
+                    showCopySuccess();
+                } else {
+                    // Fallback for older browsers or non-HTTPS
+                    copyWithFallback(addressText);
+                }
+            } catch (err) {
+                console.error('Clipboard API failed:', err);
+                // Try fallback method
+                copyWithFallback(addressText);
+            }
+        }
+
+        // Fallback method for older browsers
+        function copyWithFallback(text) {
+            // Create temporary element
             const textarea = document.createElement('textarea');
-            textarea.value = addressText;
+            textarea.value = text;
             textarea.style.position = 'fixed';
             textarea.style.left = '-999999px';
             textarea.style.top = '-999999px';
@@ -845,69 +862,66 @@
             
             // Select and copy
             textarea.select();
-            textarea.setSelectionRange(0, addressText.length);
+            textarea.setSelectionRange(0, text.length);
             
-            // Try using the modern Clipboard API first
-            const copyToClipboard = async () => {
-                try {
-                    // Try using the modern Clipboard API
-                    if (navigator.clipboard && window.isSecureContext) {
-                        await navigator.clipboard.writeText(addressText);
-                        return true;
-                    } else {
-                        // Fallback to execCommand for older browsers
-                        const successful = document.execCommand('copy');
-                        return successful;
-                    }
-                } catch (err) {
-                    console.error('Copy failed:', err);
-                    return false;
-                } finally {
-                    // Clean up
-                    document.body.removeChild(textarea);
-                }
-            };
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
             
-            copyToClipboard().then(success => {
-                if (success) {
-                    // Visual feedback on the container
-                    elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
-                    elements.btcAddressContainer.style.borderColor = '#f2a900';
-                    elements.btcAddressContainer.style.boxShadow = '0 0 20px rgba(242, 169, 0, 0.2)';
-                    
-                    // Show success message
-                    elements.copySuccess.classList.add('show');
-                    
-                    // Animation for address text
-                    elements.btcAddress.style.animation = 'copyText 0.5s ease';
-                    
-                    // Optional: Vibrate on mobile
-                    if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100]);
-                    }
-                    
-                    // Reset styles after 2 seconds
-                    setTimeout(() => {
-                        elements.copySuccess.classList.remove('show');
-                        elements.btcAddressContainer.style.background = '';
-                        elements.btcAddressContainer.style.borderColor = '';
-                        elements.btcAddressContainer.style.boxShadow = '';
-                        elements.btcAddress.style.animation = '';
-                    }, 2000);
-                } else {
-                    // Fallback error message
-                    const originalText = elements.copySuccess.textContent;
-                    elements.copySuccess.textContent = 'Copy failed!';
-                    elements.copySuccess.style.color = '#ff4d4d';
-                    elements.copySuccess.classList.add('show');
-                    
-                    setTimeout(() => {
-                        elements.copySuccess.classList.remove('show');
-                        elements.copySuccess.textContent = originalText;
-                        elements.copySuccess.style.color = '#f2a900';
-                    }, 2000);
-                }
-            });
+            // Clean up
+            document.body.removeChild(textarea);
+            
+            if (success) {
+                showCopySuccess();
+            } else {
+                showCopyError();
+            }
+        }
+
+        // Show success message
+        function showCopySuccess() {
+            // Visual feedback on the container
+            elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
+            elements.btcAddressContainer.style.borderColor = '#f2a900';
+            elements.btcAddressContainer.style.boxShadow = '0 0 20px rgba(242, 169, 0, 0.2)';
+            
+            // Show success message
+            elements.copySuccess.classList.add('show');
+            
+            // Animation for address text
+            elements.btcAddress.style.animation = 'copyText 0.5s ease';
+            
+            // Optional: Vibrate on mobile
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            
+            // Reset styles after 2 seconds
+            setTimeout(() => {
+                elements.copySuccess.classList.remove('show');
+                elements.btcAddressContainer.style.background = '';
+                elements.btcAddressContainer.style.borderColor = '';
+                elements.btcAddressContainer.style.boxShadow = '';
+                elements.btcAddress.style.animation = '';
+            }, 2000);
+        }
+
+        // Show error message
+        function showCopyError() {
+            // Fallback error message
+            const originalText = elements.copySuccess.textContent;
+            elements.copySuccess.textContent = 'Copy failed!';
+            elements.copySuccess.style.color = '#ff4d4d';
+            elements.copySuccess.classList.add('show');
+            
+            setTimeout(() => {
+                elements.copySuccess.classList.remove('show');
+                elements.copySuccess.textContent = originalText;
+                elements.copySuccess.style.color = '#f2a900';
+            }, 2000);
         }
 
         // Touch/click handler for manual update
@@ -1032,8 +1046,8 @@
             elements.clockContainer = null;
             elements.hourHand = null;
             elements.minuteHand = null;
-            elements.btcLabel = null;
-            elements.clockFace = null;
+            elements.btcLabel = null,
+            elements.clockFace = null,
             elements.cooldownIndicator = null;
         }
 
