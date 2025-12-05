@@ -28,9 +28,6 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: #000000;
             color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: fixed;
             top: 0;
             left: 0;
@@ -47,9 +44,6 @@
             height: 100%;
             background: #000000;
             z-index: 9999;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
             display: none;
         }
 
@@ -61,7 +55,6 @@
             width: 100%;
             height: 100%;
             position: relative;
-            transition: opacity 0.5s ease;
         }
 
         .title {
@@ -73,7 +66,6 @@
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
             z-index: 1000;
-            transition: all 0.5s ease;
         }
 
         .clock-container {
@@ -84,7 +76,6 @@
             max-height: 500px;
             min-width: 300px;
             min-height: 300px;
-            transition: all 0.5s ease;
         }
 
         /* Perfect clock face */
@@ -94,7 +85,6 @@
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 50%;
-            transition: all 0.5s ease;
         }
 
         /* Perfect tick marks */
@@ -102,7 +92,6 @@
             position: absolute;
             background: rgba(255, 255, 255, 0.7);
             transform-origin: 0% 0%;
-            transition: opacity 0.5s ease;
         }
 
         .tick-hour {
@@ -132,7 +121,6 @@
             letter-spacing: 0.3px;
             transform: translate(-50%, -50%);
             font-variant-numeric: tabular-nums;
-            transition: opacity 0.5s ease;
         }
 
         /* BTC label */
@@ -146,7 +134,6 @@
             font-weight: 300;
             letter-spacing: 1px;
             text-transform: uppercase;
-            transition: opacity 0.5s ease;
         }
 
         /* Hands */
@@ -164,7 +151,7 @@
             left: 50%;
             bottom: 50%;
             border-radius: 1px;
-            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1), opacity 0.5s ease;
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1);
             transform: translateX(-50%) rotate(0deg);
         }
 
@@ -194,7 +181,6 @@
             transform: translate(-50%, -50%);
             z-index: 10;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
-            transition: opacity 0.5s ease;
         }
 
         /* Price display */
@@ -202,7 +188,6 @@
             position: absolute;
             bottom: 50px;
             text-align: center;
-            transition: all 0.5s ease;
         }
 
         .current-price {
@@ -212,7 +197,6 @@
             color: #ffffff;
             font-variant-numeric: tabular-nums;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            transition: all 0.5s ease;
         }
 
         .price-details {
@@ -220,7 +204,6 @@
             display: flex;
             gap: 30px;
             justify-content: center;
-            transition: all 0.5s ease;
         }
 
         .detail {
@@ -259,7 +242,6 @@
             font-size: 0.85rem;
             letter-spacing: 1px;
             font-weight: 300;
-            transition: opacity 0.5s ease;
         }
 
         /* Status indicator */
@@ -271,7 +253,6 @@
             color: rgba(255, 255, 255, 0.25);
             letter-spacing: 1px;
             font-weight: 300;
-            transition: opacity 0.5s ease;
         }
 
         /* Landscape mode - only title visible */
@@ -280,38 +261,17 @@
                 position: fixed;
                 top: 50%;
                 left: 50%;
-                transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%) !important;
                 font-size: 4rem;
                 letter-spacing: 12px;
-                opacity: 1;
-                z-index: 1000;
-            }
-
-            .container.active {
-                opacity: 0;
             }
 
             .clock-container,
             .price-display,
             .status,
             .btc-label,
-            .loading,
-            .clock-face,
-            .tick,
-            .price-label,
-            .hand,
-            .center-dot {
-                opacity: 0;
-                visibility: hidden;
-                pointer-events: none;
-            }
-
-            .clock-container {
-                transform: scale(0.8);
-            }
-
-            .price-display {
-                transform: translateY(50px);
+            .loading {
+                display: none;
             }
         }
 
@@ -350,44 +310,6 @@
             }
         }
 
-        /* Large landscape devices */
-        @media (orientation: landscape) and (min-height: 601px) {
-            .title {
-                top: 40px;
-                transform: none;
-                font-size: 2.2rem;
-                letter-spacing: 8px;
-                position: absolute;
-            }
-            
-            .container.active {
-                opacity: 1;
-            }
-            
-            .clock-container,
-            .price-display,
-            .status,
-            .btc-label,
-            .loading,
-            .clock-face,
-            .tick,
-            .price-label,
-            .hand,
-            .center-dot {
-                opacity: 1;
-                visibility: visible;
-                pointer-events: auto;
-            }
-            
-            .clock-container {
-                transform: scale(1);
-            }
-            
-            .price-display {
-                transform: none;
-            }
-        }
-
         /* Disable all interactions */
         *:focus {
             outline: none;
@@ -402,7 +324,6 @@
         
         <div class="clock-container">
             <div class="clock-face"></div>
-            <!-- Ticks and labels will be generated by JavaScript -->
             
             <div class="btc-label">BTC</div>
             
@@ -467,7 +388,8 @@
             hourScale: 10000,
             minuteScale: 1000,
             isLandscape: window.innerHeight <= 600 && window.innerWidth > window.innerHeight,
-            orientationLock: false
+            orientationLock: false,
+            clockElementsCreated: false
         };
 
         // DOM Elements
@@ -482,7 +404,7 @@
             clockContainer: document.querySelector('.clock-container'),
             title: document.querySelector('.title'),
             priceDisplay: document.querySelector('.price-display'),
-            container: document.querySelector('.container'),
+            btcLabel: document.querySelector('.btc-label'),
             overlay: document.querySelector('.rotation-overlay')
         };
 
@@ -497,21 +419,43 @@
             if (currentOrientation !== lastOrientation) {
                 // Show black overlay
                 elements.overlay.style.display = 'block';
-                elements.container.style.opacity = '0';
                 
                 // Clear any existing timeout
                 if (orientationChangeTimeout) {
                     clearTimeout(orientationChangeTimeout);
                 }
                 
-                // Hide overlay after 1 second and update display
+                // Hide overlay after 1 second and completely redraw everything
                 orientationChangeTimeout = setTimeout(() => {
                     elements.overlay.style.display = 'none';
-                    elements.container.style.opacity = '1';
+                    
+                    // Force complete redraw of clock
+                    destroyClockElements();
+                    createPerfectTicks();
                     updateOrientationDisplay();
                     lastOrientation = currentOrientation;
+                    
+                    // Reset clock animation
+                    if (!state.isLandscape) {
+                        updateClock();
+                    }
                 }, 1000);
             }
+        }
+
+        // Destroy all clock elements
+        function destroyClockElements() {
+            const container = elements.clockContainer;
+            
+            // Remove all ticks
+            const ticks = container.querySelectorAll('.tick');
+            ticks.forEach(tick => tick.remove());
+            
+            // Remove all price labels
+            const labels = container.querySelectorAll('.price-label');
+            labels.forEach(label => label.remove());
+            
+            state.clockElementsCreated = false;
         }
 
         // Update display based on orientation
@@ -520,17 +464,20 @@
             state.isLandscape = isLandscape;
             
             if (isLandscape) {
-                // Landscape mode - only show title
+                // Landscape mode - only show title centered
                 elements.title.style.position = 'fixed';
                 elements.title.style.top = '50%';
                 elements.title.style.left = '50%';
                 elements.title.style.transform = 'translate(-50%, -50%)';
                 elements.title.style.fontSize = window.innerHeight <= 400 ? '3rem' : '4rem';
                 elements.title.style.letterSpacing = window.innerHeight <= 400 ? '10px' : '12px';
-                elements.title.style.opacity = '1';
+                elements.title.style.display = 'block';
                 
-                // Hide other elements
-                elements.container.classList.add('active');
+                // Hide all other elements
+                elements.clockContainer.style.display = 'none';
+                elements.priceDisplay.style.display = 'none';
+                elements.status.style.display = 'none';
+                elements.btcLabel.style.display = 'none';
             } else {
                 // Portrait mode - show everything
                 elements.title.style.position = 'absolute';
@@ -539,28 +486,39 @@
                 elements.title.style.transform = 'translateX(-50%)';
                 elements.title.style.fontSize = window.innerWidth <= 600 ? '1.8rem' : '2.2rem';
                 elements.title.style.letterSpacing = window.innerWidth <= 600 ? '6px' : '8px';
-                elements.title.style.opacity = '1';
+                elements.title.style.display = 'block';
                 
-                // Show other elements
-                elements.container.classList.remove('active');
+                // Show all other elements
+                elements.clockContainer.style.display = 'block';
+                elements.priceDisplay.style.display = 'block';
+                elements.status.style.display = 'block';
+                elements.btcLabel.style.display = 'block';
             }
         }
 
         // Initialize
         async function init() {
+            // Initial creation
             createPerfectTicks();
             updateOrientationDisplay();
             
             // Listen for orientation changes
             window.addEventListener('resize', handleOrientationChange);
             
+            // Initial data fetch
             await fetchPrice();
             setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
-            requestAnimationFrame(updateClock);
+            
+            // Start clock animation if in portrait
+            if (!state.isLandscape) {
+                requestAnimationFrame(updateClock);
+            }
         }
 
         // Create perfect tick marks
         function createPerfectTicks() {
+            if (state.clockElementsCreated) return;
+            
             const container = elements.clockContainer;
             const width = container.offsetWidth;
             const height = container.offsetHeight;
@@ -598,13 +556,14 @@
                 container.appendChild(tick);
             }
 
-            // Create initial price labels
+            // Create price labels
             updatePriceLabels();
+            state.clockElementsCreated = true;
         }
 
         // Update price labels based on current scale
         function updatePriceLabels() {
-            // Remove existing labels
+            // Remove existing labels if any
             const existingLabels = elements.clockContainer.querySelectorAll('.price-label');
             existingLabels.forEach(el => el.remove());
             
@@ -668,16 +627,6 @@
                 updatePriceLabels();
             }
         }
-
-        // Update on resize (for ticks regeneration)
-        window.addEventListener('resize', function() {
-            // Clear and recreate ticks
-            const container = elements.clockContainer;
-            const existingTicks = container.querySelectorAll('.tick');
-            existingTicks.forEach(el => el.remove());
-            
-            createPerfectTicks();
-        });
 
         // Fetch Bitcoin price
         async function fetchPrice() {
