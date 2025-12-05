@@ -57,11 +57,6 @@
             background: #000000;
             z-index: 10000;
             display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -74,8 +69,14 @@
         .donation-content {
             max-width: 500px;
             width: 90%;
-            padding: 40px 20px;
+            margin: auto;
+            padding: 20px;
             animation: fadeInUp 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
         .donation-title {
@@ -85,10 +86,16 @@
             margin-bottom: 40px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
+            text-align: center;
+            width: 100%;
         }
 
         .donation-section {
             margin-bottom: 40px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .donation-subtitle {
@@ -98,6 +105,8 @@
             margin-bottom: 20px;
             color: rgba(255, 255, 255, 0.8);
             text-transform: uppercase;
+            text-align: center;
+            width: 100%;
         }
 
         .btc-address-container {
@@ -110,6 +119,8 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            width: 100%;
+            max-width: 400px;
         }
 
         .btc-address-container:hover {
@@ -128,6 +139,7 @@
             color: #f2a900;
             word-break: break-all;
             line-height: 1.4;
+            text-align: center;
         }
 
         .copy-hint {
@@ -136,6 +148,8 @@
             margin-top: 8px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            text-align: center;
+            width: 100%;
         }
 
         .copy-success {
@@ -144,7 +158,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(242, 169, 0, 0.1);
+            background: rgba(242, 169, 0, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -152,13 +166,14 @@
             color: #f2a900;
             opacity: 0;
             transition: opacity 0.3s ease;
+            border-radius: 8px;
         }
 
         .copy-success.show {
             opacity: 1;
         }
 
-        .buy-coffee-link {
+        .donation-button {
             display: inline-block;
             padding: 12px 30px;
             background: rgba(255, 255, 255, 0.05);
@@ -171,15 +186,27 @@
             text-transform: uppercase;
             transition: all 0.3s ease;
             margin-top: 10px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 200px;
         }
 
-        .buy-coffee-link:hover {
+        .donation-button:hover {
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.2);
             color: #ffffff;
         }
 
-        .close-donation {
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .close-donation-top {
             position: absolute;
             top: 30px;
             right: 30px;
@@ -194,23 +221,22 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 1.2rem;
+            z-index: 10001;
         }
 
-        .close-donation:hover {
+        .close-donation-top:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.2);
         }
 
         .donation-footer {
-            position: absolute;
-            bottom: 30px;
-            width: 100%;
+            margin-top: 40px;
             text-align: center;
             font-size: 0.75rem;
             color: rgba(255, 255, 255, 0.3);
             letter-spacing: 1px;
             text-transform: uppercase;
-            padding: 0 20px;
+            width: 100%;
         }
 
         @keyframes fadeInUp {
@@ -536,11 +562,17 @@
                 font-size: 0.85rem;
             }
 
-            .close-donation {
+            .close-donation-top {
                 top: 20px;
                 right: 20px;
                 width: 35px;
                 height: 35px;
+            }
+
+            .donation-button {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                min-width: 180px;
             }
         }
 
@@ -552,25 +584,10 @@
             }
         }
 
-        /* Donation page in landscape */
-        @media (orientation: landscape) and (max-height: 600px) {
-            .donation-content {
-                padding: 20px;
-                max-width: 90%;
-            }
-
-            .donation-title {
-                font-size: 1.5rem;
-                margin-bottom: 30px;
-            }
-
-            .donation-section {
-                margin-bottom: 25px;
-            }
-
-            .donation-footer {
-                bottom: 15px;
-                font-size: 0.7rem;
+        /* Donation page in landscape - hide it */
+        @media (orientation: landscape) {
+            .donation-overlay {
+                display: none !important;
             }
         }
 
@@ -585,7 +602,7 @@
     
     <!-- Donation Overlay -->
     <div class="donation-overlay" id="donationOverlay">
-        <div class="close-donation" id="closeDonation">×</div>
+        <div class="close-donation-top" id="closeDonationTop">×</div>
         
         <div class="donation-content">
             <h2 class="donation-title">Support BITCLOCK</h2>
@@ -597,20 +614,25 @@
                         bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
                     </div>
                     <div class="copy-hint">Tap to copy address</div>
-                    <div class="copy-success" id="copySuccess">Address copied!</div>
+                    <div class="copy-success" id="copySuccess">✓ Address Copied!</div>
                 </div>
             </div>
             
             <div class="donation-section">
                 <h3 class="donation-subtitle">Other Ways to Support</h3>
-                <a href="https://buymeacoffee.com" target="_blank" rel="noopener" class="buy-coffee-link">
-                    Buy Me a Coffee
-                </a>
+                <div class="button-group">
+                    <a href="https://buymeacoffee.com" target="_blank" rel="noopener" class="donation-button">
+                        Buy Me a Coffee
+                    </a>
+                    <button class="donation-button" id="closeDonationBottom">
+                        Close
+                    </button>
+                </div>
             </div>
-        </div>
-        
-        <div class="donation-footer">
-            Thank you for your support
+            
+            <div class="donation-footer">
+                Thank you for your support
+            </div>
         </div>
     </div>
     
@@ -699,7 +721,8 @@
             cooldownIndicator: null,
             // Donation elements
             donationOverlay: document.getElementById('donationOverlay'),
-            closeDonation: document.getElementById('closeDonation'),
+            closeDonationTop: document.getElementById('closeDonationTop'),
+            closeDonationBottom: document.getElementById('closeDonationBottom'),
             btcAddressContainer: document.getElementById('btcAddressContainer'),
             btcAddress: document.getElementById('btcAddress'),
             copySuccess: document.getElementById('copySuccess'),
@@ -711,11 +734,20 @@
             // Set BTC address
             elements.btcAddress.textContent = CONFIG.BTC_ADDRESS;
             
-            // Title click to open donation
-            elements.pageTitle.addEventListener('click', toggleDonationOverlay);
-            elements.pageTitle.addEventListener('touchstart', toggleDonationOverlay);
+            // Title click to open donation (only in portrait)
+            elements.pageTitle.addEventListener('click', function(e) {
+                if (isPortraitMode()) {
+                    toggleDonationOverlay();
+                }
+            });
             
-            // Background click to open donation (outside clock)
+            elements.pageTitle.addEventListener('touchstart', function(e) {
+                if (isPortraitMode()) {
+                    toggleDonationOverlay();
+                }
+            });
+            
+            // Background click to open donation (outside clock, only in portrait)
             document.addEventListener('click', function(e) {
                 // Don't open if clicking on clock or its children
                 if (e.target.closest('.clock-wrapper') || 
@@ -724,15 +756,18 @@
                     return;
                 }
                 
-                // Don't open if already open
-                if (state.donationOverlayVisible) return;
+                // Don't open if already open or not in portrait
+                if (state.donationOverlayVisible || !isPortraitMode()) return;
                 
                 toggleDonationOverlay();
             });
             
-            // Close donation overlay
-            elements.closeDonation.addEventListener('click', toggleDonationOverlay);
-            elements.closeDonation.addEventListener('touchstart', toggleDonationOverlay);
+            // Close donation overlay - both buttons
+            elements.closeDonationTop.addEventListener('click', toggleDonationOverlay);
+            elements.closeDonationTop.addEventListener('touchstart', toggleDonationOverlay);
+            
+            elements.closeDonationBottom.addEventListener('click', toggleDonationOverlay);
+            elements.closeDonationBottom.addEventListener('touchstart', toggleDonationOverlay);
             
             // Copy BTC address functionality
             elements.btcAddressContainer.addEventListener('click', copyBTCAddress);
@@ -746,10 +781,20 @@
             });
         }
 
+        // Check if device is in portrait mode
+        function isPortraitMode() {
+            return window.innerHeight > window.innerWidth && window.innerHeight > 600;
+        }
+
         function toggleDonationOverlay(e) {
             if (e) {
                 e.preventDefault();
                 e.stopPropagation();
+            }
+            
+            // Only allow in portrait mode
+            if (!isPortraitMode() && !state.donationOverlayVisible) {
+                return;
             }
             
             state.donationOverlayVisible = !state.donationOverlayVisible;
@@ -782,15 +827,23 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
+                    // Visual feedback on the container
+                    elements.btcAddressContainer.style.background = 'rgba(242, 169, 0, 0.15)';
+                    elements.btcAddressContainer.style.borderColor = '#f2a900';
+                    
                     // Show success message
                     elements.copySuccess.classList.add('show');
+                    
+                    // Reset styles after 2 seconds
                     setTimeout(() => {
                         elements.copySuccess.classList.remove('show');
+                        elements.btcAddressContainer.style.background = '';
+                        elements.btcAddressContainer.style.borderColor = '';
                     }, 2000);
                     
                     // Optional: Vibrate on mobile
                     if (navigator.vibrate) {
-                        navigator.vibrate(100);
+                        navigator.vibrate([100, 50, 100]);
                     }
                 }
             } catch (err) {
