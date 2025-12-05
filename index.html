@@ -76,6 +76,8 @@
             max-height: 500px;
             min-width: 300px;
             min-height: 300px;
+            touch-action: manipulation;
+            cursor: pointer;
         }
 
         /* Clock container - will be completely recreated */
@@ -94,6 +96,15 @@
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 50%;
+            transition: border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Clock face active state - subtle illumination */
+        .clock-face.active {
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
+                        inset 0 0 20px rgba(255, 255, 255, 0.04);
         }
 
         /* Perfect tick marks */
@@ -264,6 +275,24 @@
             font-weight: 300;
         }
 
+        /* Touch cooldown indicator */
+        .cooldown-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 94%;
+            height: 94%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cooldown-indicator.active {
+            opacity: 0.15;
+        }
+
         /* Landscape mode - only title visible */
         @media (orientation: landscape) and (max-height: 600px) {
             .title {
@@ -354,7 +383,7 @@
     </div>
 
     <script>
-        // Prevent all interactions
+        // Prevent all interactions except clock touch
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
         }, { passive: false });
@@ -374,7 +403,8 @@
         // Configuration
         const CONFIG = {
             API_URL: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',
-            UPDATE_INTERVAL: 30000
+            UPDATE_INTERVAL: 30000,
+            MANUAL_UPDATE_COOLDOWN: 10000 // 10 seconds cooldown for manual updates
         };
 
         // State
@@ -387,7 +417,9 @@
             hourScale: 10000,
             minuteScale: 1000,
             isLandscape: window.innerHeight <= 600 && window.innerWidth > window.innerHeight,
-            animationFrameId: null
+            animationFrameId: null,
+            canManuallyUpdate: true,
+            lastManualUpdate: 0
         };
 
         // DOM Elements
@@ -403,8 +435,78 @@
             overlay: document.querySelector('.rotation-overlay'),
             clockContainer: null,
             hourHand: null,
-            minuteHand: null
+            minuteHand: null,
+            clockFace: null,
+            cooldownIndicator: null
         };
+
+        // Touch/click handler for manual update
+        function setupTouchHandler() {
+            if (!elements.clockWrapper || state.isLandscape) return;
+            
+            // Remove existing listeners
+            elements.clockWrapper.removeEventListener('click', handleClockTouch);
+            elements.clockWrapper.removeEventListener('touchstart', handleClockTouch);
+            
+            // Add new listeners
+            elements.clockWrapper.addEventListener('click', handleClockTouch);
+            elements.clockWrapper.addEventListener('touchstart', handleClockTouch);
+        }
+
+        function handleClockTouch(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Don't trigger in landscape mode
+            if (state.isLandscape) return;
+            
+            // Check cooldown
+            const now = Date.now();
+            const timeSinceLastUpdate = now - state.lastManualUpdate;
+            
+            if (!state.canManuallyUpdate || timeSinceLastUpdate < CONFIG.MANUAL_UPDATE_COOLDOWN) {
+                // Show brief feedback that update is on cooldown
+                if (elements.clockFace) {
+                    elements.clockFace.classList.add('active');
+                    setTimeout(() => {
+                        elements.clockFace.classList.remove('active');
+                    }, 300);
+                }
+                return;
+            }
+            
+            // Set cooldown
+            state.canManuallyUpdate = false;
+            state.lastManualUpdate = now;
+            
+            // Show visual feedback
+            if (elements.clockFace) {
+                elements.clockFace.classList.add('active');
+                setTimeout(() => {
+                    elements.clockFace.classList.remove('active');
+                }, 800); // Match the transition duration
+            }
+            
+            // Show cooldown indicator briefly
+            if (elements.cooldownIndicator) {
+                elements.cooldownIndicator.classList.add('active');
+                setTimeout(() => {
+                    elements.cooldownIndicator.classList.remove('active');
+                }, 500);
+            }
+            
+            // Update status
+            elements.status.textContent = 'Updating...';
+            elements.status.style.opacity = '0.5';
+            
+            // Trigger price update
+            fetchPrice();
+            
+            // Re-enable manual update after cooldown
+            setTimeout(() => {
+                state.canManuallyUpdate = true;
+            }, CONFIG.MANUAL_UPDATE_COOLDOWN);
+        }
 
         // Orientation change handling
         let orientationChangeTimeout;
@@ -438,6 +540,9 @@
                     updateOrientationDisplay();
                     createClock();
                     
+                    // Setup touch handler
+                    setupTouchHandler();
+                    
                     // Restart animation if in portrait mode
                     if (!state.isLandscape) {
                         requestAnimationFrame(updateClock);
@@ -458,6 +563,8 @@
             elements.hourHand = null;
             elements.minuteHand = null;
             elements.btcLabel = null;
+            elements.clockFace = null;
+            elements.cooldownIndicator = null;
         }
 
         // Create complete clock from scratch
@@ -470,9 +577,14 @@
             elements.clockWrapper.appendChild(elements.clockContainer);
             
             // Create clock face
-            const clockFace = document.createElement('div');
-            clockFace.className = 'clock-face';
-            elements.clockContainer.appendChild(clockFace);
+            elements.clockFace = document.createElement('div');
+            elements.clockFace.className = 'clock-face';
+            elements.clockContainer.appendChild(elements.clockFace);
+            
+            // Create cooldown indicator
+            elements.cooldownIndicator = document.createElement('div');
+            elements.cooldownIndicator.className = 'cooldown-indicator';
+            elements.clockContainer.appendChild(elements.cooldownIndicator);
             
             // Create ticks and labels
             createPerfectTicks();
@@ -671,6 +783,9 @@
             updateOrientationDisplay();
             createClock();
             
+            // Setup touch handler
+            setupTouchHandler();
+            
             // Listen for orientation changes
             window.addEventListener('resize', handleOrientationChange);
             
@@ -688,6 +803,7 @@
         async function fetchPrice() {
             try {
                 elements.status.textContent = 'Updating...';
+                elements.status.style.opacity = '0.5';
                 
                 const response = await fetch(CONFIG.API_URL);
                 const data = await response.json();
