@@ -56,7 +56,7 @@
             letter-spacing: 8px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
-            z-index: 100;
+            z-index: 1000;
             transition: all 0.3s ease;
         }
 
@@ -68,7 +68,7 @@
             max-height: 500px;
             min-width: 300px;
             min-height: 300px;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         /* Perfect clock face */
@@ -78,6 +78,7 @@
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 50%;
+            transition: all 0.3s ease;
         }
 
         /* Perfect tick marks */
@@ -85,6 +86,7 @@
             position: absolute;
             background: rgba(255, 255, 255, 0.7);
             transform-origin: 0% 0%;
+            transition: opacity 0.3s ease;
         }
 
         .tick-hour {
@@ -105,7 +107,7 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* Price labels - significantly increased distance from ticks */
+        /* Price labels */
         .price-label {
             position: absolute;
             color: rgba(255, 255, 255, 0.7);
@@ -114,6 +116,7 @@
             letter-spacing: 0.3px;
             transform: translate(-50%, -50%);
             font-variant-numeric: tabular-nums;
+            transition: opacity 0.3s ease;
         }
 
         /* BTC label */
@@ -127,6 +130,7 @@
             font-weight: 300;
             letter-spacing: 1px;
             text-transform: uppercase;
+            transition: opacity 0.3s ease;
         }
 
         /* Hands */
@@ -144,7 +148,7 @@
             left: 50%;
             bottom: 50%;
             border-radius: 1px;
-            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1);
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.8, 1), opacity 0.3s ease;
             transform: translateX(-50%) rotate(0deg);
         }
 
@@ -174,6 +178,7 @@
             transform: translate(-50%, -50%);
             z-index: 10;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+            transition: opacity 0.3s ease;
         }
 
         /* Price display */
@@ -181,7 +186,7 @@
             position: absolute;
             bottom: 50px;
             text-align: center;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .current-price {
@@ -191,6 +196,7 @@
             color: #ffffff;
             font-variant-numeric: tabular-nums;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            transition: all 0.3s ease;
         }
 
         .price-details {
@@ -198,6 +204,7 @@
             display: flex;
             gap: 30px;
             justify-content: center;
+            transition: all 0.3s ease;
         }
 
         .detail {
@@ -236,6 +243,7 @@
             font-size: 0.85rem;
             letter-spacing: 1px;
             font-weight: 300;
+            transition: opacity 0.3s ease;
         }
 
         /* Status indicator */
@@ -253,16 +261,13 @@
         /* Landscape mode - only title visible */
         @media (orientation: landscape) and (max-height: 600px) {
             .title {
-                position: absolute;
+                position: fixed;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 font-size: 4rem;
                 letter-spacing: 12px;
-                margin: 0;
-                text-align: center;
-                width: 100%;
-                opacity: 1 !important;
+                opacity: 1;
                 z-index: 1000;
             }
 
@@ -270,15 +275,23 @@
             .price-display,
             .status,
             .btc-label,
-            .loading {
-                opacity: 0 !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
+            .loading,
+            .clock-face,
+            .tick,
+            .price-label,
+            .hand,
+            .center-dot {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
             }
 
-            .container {
-                justify-content: center;
-                align-items: center;
+            .clock-container {
+                transform: scale(0.8);
+            }
+
+            .price-display {
+                transform: translateY(50px);
             }
         }
 
@@ -306,6 +319,48 @@
             .btc-label {
                 bottom: -22px;
                 font-size: 12px;
+            }
+        }
+
+        /* Small landscape devices */
+        @media (orientation: landscape) and (max-height: 400px) {
+            .title {
+                font-size: 3rem;
+                letter-spacing: 10px;
+            }
+        }
+
+        /* Large landscape devices */
+        @media (orientation: landscape) and (min-height: 601px) {
+            .title {
+                top: 40px;
+                transform: none;
+                font-size: 2.2rem;
+                letter-spacing: 8px;
+                position: absolute;
+            }
+            
+            .clock-container,
+            .price-display,
+            .status,
+            .btc-label,
+            .loading,
+            .clock-face,
+            .tick,
+            .price-label,
+            .hand,
+            .center-dot {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+            
+            .clock-container {
+                transform: scale(1);
+            }
+            
+            .price-display {
+                transform: none;
             }
         }
 
@@ -385,7 +440,7 @@
             currentScale: 120000,
             hourScale: 10000,
             minuteScale: 1000,
-            isLandscape: false
+            isLandscape: window.innerHeight <= 600 && window.innerWidth > window.innerHeight
         };
 
         // DOM Elements
@@ -398,69 +453,46 @@
             loading: document.querySelector('.loading'),
             status: document.getElementById('status'),
             clockContainer: document.querySelector('.clock-container'),
-            priceDisplay: document.querySelector('.price-display'),
             title: document.querySelector('.title'),
-            btcLabel: document.querySelector('.btc-label')
+            priceDisplay: document.querySelector('.price-display')
         };
 
-        // Initialize
-        async function init() {
-            checkOrientation();
-            createPerfectTicks();
-            await fetchPrice();
-            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
-            requestAnimationFrame(updateClock);
-            
-            // Listen for orientation changes
-            window.addEventListener('resize', checkOrientation);
-            window.addEventListener('orientationchange', checkOrientation);
-        }
-
-        // Check orientation and update state
+        // Check orientation
         function checkOrientation() {
-            const isLandscape = window.innerWidth > window.innerHeight && window.innerHeight <= 600;
+            const isLandscape = window.innerHeight <= 600 && window.innerWidth > window.innerHeight;
             
-            if (state.isLandscape !== isLandscape) {
+            if (isLandscape !== state.isLandscape) {
                 state.isLandscape = isLandscape;
                 
                 if (isLandscape) {
-                    // In landscape mode, make sure title is centered and large
-                    elements.title.style.opacity = '1';
-                    elements.title.style.fontSize = '4rem';
-                    elements.title.style.letterSpacing = '12px';
+                    // In landscape mode, only show title
+                    elements.title.style.position = 'fixed';
                     elements.title.style.top = '50%';
                     elements.title.style.left = '50%';
                     elements.title.style.transform = 'translate(-50%, -50%)';
-                    
-                    // Hide everything else
-                    elements.clockContainer.style.opacity = '0';
-                    elements.clockContainer.style.visibility = 'hidden';
-                    elements.priceDisplay.style.opacity = '0';
-                    elements.priceDisplay.style.visibility = 'hidden';
-                    elements.status.style.opacity = '0';
-                    elements.status.style.visibility = 'hidden';
-                    elements.btcLabel.style.opacity = '0';
-                    elements.btcLabel.style.visibility = 'hidden';
+                    elements.title.style.fontSize = window.innerHeight <= 400 ? '3rem' : '4rem';
+                    elements.title.style.letterSpacing = window.innerHeight <= 400 ? '10px' : '12px';
+                    elements.title.style.zIndex = '1000';
                 } else {
-                    // In portrait mode, restore normal view
-                    elements.title.style.opacity = '1';
-                    elements.title.style.fontSize = '';
-                    elements.title.style.letterSpacing = '';
+                    // In portrait mode, show everything
+                    elements.title.style.position = 'absolute';
                     elements.title.style.top = '40px';
-                    elements.title.style.left = '';
-                    elements.title.style.transform = '';
-                    
-                    // Show everything
-                    elements.clockContainer.style.opacity = '1';
-                    elements.clockContainer.style.visibility = 'visible';
-                    elements.priceDisplay.style.opacity = '1';
-                    elements.priceDisplay.style.visibility = 'visible';
-                    elements.status.style.opacity = '0.25';
-                    elements.status.style.visibility = 'visible';
-                    elements.btcLabel.style.opacity = '1';
-                    elements.btcLabel.style.visibility = 'visible';
+                    elements.title.style.left = '50%';
+                    elements.title.style.transform = 'translateX(-50%)';
+                    elements.title.style.fontSize = window.innerWidth <= 600 ? '1.8rem' : '2.2rem';
+                    elements.title.style.letterSpacing = window.innerWidth <= 600 ? '6px' : '8px';
                 }
             }
+        }
+
+        // Initialize
+        async function init() {
+            createPerfectTicks();
+            checkOrientation();
+            window.addEventListener('resize', checkOrientation);
+            await fetchPrice();
+            setInterval(fetchPrice, CONFIG.UPDATE_INTERVAL);
+            requestAnimationFrame(updateClock);
         }
 
         // Create perfect tick marks
@@ -508,9 +540,6 @@
 
         // Update price labels based on current scale
         function updatePriceLabels() {
-            // Skip if in landscape mode
-            if (state.isLandscape) return;
-            
             // Remove existing labels
             const existingLabels = elements.clockContainer.querySelectorAll('.price-label');
             existingLabels.forEach(el => el.remove());
@@ -539,7 +568,7 @@
                 ];
             }
 
-            // Create new labels with SIGNIFICANTLY INCREASED distance from ticks
+            // Create new labels
             labels.forEach(label => {
                 const labelEl = document.createElement('div');
                 labelEl.className = 'price-label';
@@ -548,7 +577,7 @@
                 // Convert angle to radians
                 const angleRad = label.angle * (Math.PI / 180);
                 
-                // AUMENTATO ULTERIORMENTE: Da radius - 38 a radius - 48
+                // Distance from center
                 const labelRadius = radius - 48;
                 
                 // Calculate position
@@ -564,9 +593,6 @@
 
         // Update scale based on price
         function updateScale(price) {
-            // Skip if in landscape mode
-            if (state.isLandscape) return;
-            
             const newScale = price >= 120000 ? 240000 : 120000;
             
             if (state.currentScale !== newScale) {
@@ -581,24 +607,21 @@
 
         // Update on resize
         window.addEventListener('resize', function() {
-            // Skip if in landscape mode
-            if (state.isLandscape) return;
-            
             // Clear and recreate ticks
             const container = elements.clockContainer;
             const existingTicks = container.querySelectorAll('.tick');
             existingTicks.forEach(el => el.remove());
             
             createPerfectTicks();
+            
+            // Check orientation
+            checkOrientation();
         });
 
         // Fetch Bitcoin price
         async function fetchPrice() {
             try {
-                // Don't show status updates in landscape mode
-                if (!state.isLandscape) {
-                    elements.status.textContent = 'Updating...';
-                }
+                elements.status.textContent = 'Updating...';
                 
                 const response = await fetch(CONFIG.API_URL);
                 const data = await response.json();
@@ -612,11 +635,8 @@
                 updateScale(state.price);
                 
                 elements.loading.style.display = 'none';
-                
-                if (!state.isLandscape) {
-                    elements.status.textContent = 'Live';
-                    elements.status.style.opacity = '0.25';
-                }
+                elements.status.textContent = 'Live';
+                elements.status.style.opacity = '0.25';
                 
             } catch (error) {
                 console.error('API Error:', error);
@@ -631,11 +651,8 @@
                 updateScale(state.price);
                 
                 elements.loading.style.display = 'none';
-                
-                if (!state.isLandscape) {
-                    elements.status.textContent = 'Simulated';
-                    elements.status.style.opacity = '0.15';
-                }
+                elements.status.textContent = 'Simulated';
+                elements.status.style.opacity = '0.15';
             }
         }
 
@@ -646,7 +663,7 @@
                 return;
             }
 
-            // Skip clock updates in landscape mode
+            // Only update clock in portrait mode
             if (!state.isLandscape) {
                 // Normalize price to current scale
                 const normalizedPrice = state.price % state.currentScale;
@@ -687,9 +704,6 @@
 
         // Update display
         function updateDisplay(hourValue, remainder) {
-            // Skip if in landscape mode
-            if (state.isLandscape) return;
-            
             // Format price
             const priceStr = state.price.toLocaleString('en-US', {
                 minimumIntegerDigits: 5,
