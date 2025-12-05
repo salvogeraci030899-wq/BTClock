@@ -848,7 +848,6 @@
         // State
         let state = {
             price: 34750,
-            previousPrice: 34750, // Aggiungiamo per calcolare il change
             change: 0,
             isLive: false,
             isLoading: true,
@@ -859,7 +858,9 @@
             animationFrameId: null,
             canManuallyUpdate: true,
             lastManualUpdate: 0,
-            donationOverlayVisible: false
+            donationOverlayVisible: false,
+            lastPrice: 34750,
+            apiCallCount: 0
         };
 
         // DOM Elements
@@ -1599,73 +1600,119 @@
             return true;
         }
 
-        // Fetch Bitcoin price - VERSIONE CORRETTA CON FORMATO ITALIANO
+        // Fetch Bitcoin price - VERSIONE COMPLETAMENTE RIVISTA
         async function fetchPrice() {
             try {
                 elements.status.textContent = 'Updating...';
                 elements.status.style.opacity = '0.5';
 
-                // API molto semplice che funziona senza CORS
-                const response = await fetch('https://blockchain.info/ticker');
+                // Incrementa il contatore di chiamate API
+                state.apiCallCount++;
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    const newPrice = data.USD.last;
+                // API 1: CoinGecko (con cambio percentuale incluso)
+                try {
+                    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&x_cg_demo_api_key=CG-du7sSZqMZbYyVmq7rK4YtLqx');
                     
-                    // Calcola la variazione percentuale rispetto al prezzo precedente
-                    const change = ((newPrice - state.previousPrice) / state.previousPrice) * 100;
-                    
-                    state.price = newPrice;
-                    state.change = change;
-                    state.previousPrice = newPrice; // Aggiorna il prezzo precedente
-                    state.isLive = true;
-                    state.isLoading = false;
-                    
-                    // Update scale if needed
-                    updateScale(state.price);
-                    
-                    // Hide loading
-                    if (elements.clockContainer) {
-                        const loading = elements.clockContainer.querySelector('.loading');
-                        if (loading) loading.style.display = 'none';
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.bitcoin && data.bitcoin.usd) {
+                            const newPrice = data.bitcoin.usd;
+                            const change = data.bitcoin.usd_24h_change;
+                            
+                            state.price = newPrice;
+                            state.change = change;
+                            state.isLive = true;
+                            state.isLoading = false;
+                            
+                            // Update scale if needed
+                            updateScale(state.price);
+                            
+                            // Hide loading
+                            if (elements.clockContainer) {
+                                const loading = elements.clockContainer.querySelector('.loading');
+                                if (loading) loading.style.display = 'none';
+                            }
+                            
+                            elements.status.textContent = 'Live';
+                            elements.status.style.opacity = '0.25';
+                            console.log(`CoinGecko: Price: $${newPrice}, Change: ${change}%`);
+                            return;
+                        }
                     }
-                    
-                    elements.status.textContent = 'Live';
-                    elements.status.style.opacity = '0.25';
-                    console.log(`Price updated: $${newPrice}, Change: ${change.toFixed(2)}%`);
-                    return;
+                } catch (error) {
+                    console.log('CoinGecko API failed:', error);
                 }
+                
+                // API 2: Alternative simple API
+                try {
+                    const response = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.data && data.data.amount) {
+                            const newPrice = parseFloat(data.data.amount);
+                            // Per Coinbase, usiamo un cambio simulato basato sul prezzo precedente
+                            const change = state.lastPrice ? ((newPrice - state.lastPrice) / state.lastPrice * 100) : 0;
+                            
+                            state.price = newPrice;
+                            state.change = change;
+                            state.lastPrice = newPrice;
+                            state.isLive = true;
+                            state.isLoading = false;
+                            
+                            // Update scale if needed
+                            updateScale(state.price);
+                            
+                            // Hide loading
+                            if (elements.clockContainer) {
+                                const loading = elements.clockContainer.querySelector('.loading');
+                                if (loading) loading.style.display = 'none';
+                            }
+                            
+                            elements.status.textContent = 'Live (Coinbase)';
+                            elements.status.style.opacity = '0.25';
+                            console.log(`Coinbase: Price: $${newPrice}, Change: ${change}%`);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Coinbase API failed:', error);
+                }
+                
+                // Se tutte le API falliscono, usa dati simulati
+                console.log('All APIs failed, using simulated data');
+                useSimulatedData();
+                
             } catch (error) {
-                console.log('API failed, using simulated data:', error);
+                console.error('Unexpected error in fetchPrice:', error);
+                useSimulatedData();
             }
-            
-            // Fallback a dati simulati
-            fallbackToSimulatedData();
         }
 
-        // Funzione di fallback per dati simulati - CORRETTA
-        function fallbackToSimulatedData() {
-            // Genera una variazione casuale tra -0.5% e +0.5%
-            const changePercent = (Math.random() - 0.5);
-            const changeAmount = state.previousPrice * (changePercent / 100);
-            
-            // Assicurati che il prezzo non scenda sotto 28000 o superi 75000
-            let newPrice = state.previousPrice + changeAmount;
-            newPrice = Math.max(28000, Math.min(75000, newPrice));
-            
-            // Calcola il cambio percentuale reale
-            const actualChange = ((newPrice - state.previousPrice) / state.previousPrice) * 100;
-            
-            state.price = newPrice;
-            state.change = actualChange;
-            state.previousPrice = newPrice; // Aggiorna il prezzo precedente
+        // Funzione per dati simulati - CON FORMATO CORRETTO
+        function useSimulatedData() {
             state.isLive = false;
             state.isLoading = false;
             
-            // Update scale if needed
+            // Genera una variazione casuale tra -2% e +2%
+            const changePercent = (Math.random() - 0.5) * 4;
+            const changeAmount = state.price * (changePercent / 100);
+            
+            // Assicurati che il prezzo non scenda sotto 28000 o superi 75000
+            let newPrice = state.price + changeAmount;
+            newPrice = Math.max(28000, Math.min(75000, newPrice));
+            
+            // Calcola il cambio percentuale reale
+            const actualChange = changePercent;
+            
+            state.price = newPrice;
+            state.change = actualChange;
+            state.lastPrice = newPrice;
+            
             updateScale(state.price);
             
-            // Hide loading
             if (elements.clockContainer) {
                 const loading = elements.clockContainer.querySelector('.loading');
                 if (loading) loading.style.display = 'none';
@@ -1673,7 +1720,7 @@
             
             elements.status.textContent = 'Simulated';
             elements.status.style.opacity = '0.15';
-            console.log(`Simulated price: $${newPrice.toFixed(2)}, Change: ${actualChange.toFixed(2)}%`);
+            console.log(`Simulated: Price: $${newPrice.toFixed(2)}, Change: ${actualChange.toFixed(2)}%`);
         }
 
         // Update clock hands
@@ -1722,22 +1769,27 @@
             }
         }
 
-        // Update display - VERSIONE CORRETTA CON FORMATO ITALIANO
+        // FUNZIONE PER FORMARE IL PREZZO CON FORMATO ITALIANO/EUROPEO
+        function formatItalianNumber(number) {
+            // Arrotonda a 2 decimali
+            const fixedNumber = number.toFixed(2);
+            
+            // Separa parte intera e decimale
+            const parts = fixedNumber.split('.');
+            let integerPart = parts[0];
+            const decimalPart = parts[1];
+            
+            // Aggiungi i punti come separatori delle migliaia
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            // Ritorna con la virgola come separatore decimale
+            return integerPart + ',' + decimalPart;
+        }
+
+        // Update display - VERSIONE COMPLETAMENTE CORRETTA
         function updateDisplay(hourValue, remainder) {
-            // FORMATO ITALIANO: punto come separatore delle migliaia, virgola come decimale
-            // Esempio: $91.363,65 invece di $91,363.65
-            
-            // Formatta il prezzo con 2 decimali e separatori italiani
-            const priceStr = state.price.toLocaleString('it-IT', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            // Sostituisce eventuali spazi con punti (il formato it-IT potrebbe usare spazi)
-            const formattedPrice = priceStr.replace(/\s/g, '.');
-            
-            // Se il prezzo è inferiore a 100.000, assicuriamoci che abbia almeno 5 cifre intere
-            // Ma toLocaleString('it-IT') già gestisce bene
+            // Formatta il prezzo con il formato italiano
+            const formattedPrice = formatItalianNumber(state.price);
             elements.currentPrice.textContent = formattedPrice;
             
             // Format change con virgola come decimale
@@ -1755,7 +1807,7 @@
             const rangeStart = currentHour * state.hourScale;
             const rangeEnd = (currentHour + 1) * state.hourScale;
             
-            // Format range text (manteniamo il formato con k)
+            // Format range text
             let rangeText;
             if (currentHour === 11) {
                 rangeText = `$${(rangeStart/1000).toFixed(0)}k-${(state.currentScale/1000).toFixed(0)}k`;
