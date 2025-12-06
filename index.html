@@ -95,7 +95,7 @@
         }
 
         .asset-selector-below .asset-name[data-asset="SOL"] {
-            color: #00FFA3;
+            color: #9945FF;
         }
 
         .asset-selector-below .asset-arrow {
@@ -143,7 +143,7 @@
             max-width: 500px;
             width: 90%;
             margin: auto;
-            padding: 20px;
+            padding: 15px;
             animation: fadeInUp 0.5s ease;
             display: flex;
             flex-direction: column;
@@ -154,10 +154,10 @@
         }
 
         .donation-title {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 300;
             letter-spacing: 4px;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
             text-align: center;
@@ -165,7 +165,7 @@
         }
 
         .donation-section {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -173,10 +173,10 @@
         }
 
         .donation-subtitle {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 400;
             letter-spacing: 1px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: rgba(255, 255, 255, 0.8);
             text-transform: uppercase;
             text-align: center;
@@ -187,8 +187,8 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
@@ -226,13 +226,13 @@
         }
 
         .sol-address {
-            color: #00FFA3;
+            color: #9945FF;
         }
 
         .copy-hint {
             font-size: 0.75rem;
             color: rgba(255, 255, 255, 0.5);
-            margin-top: 8px;
+            margin-top: 6px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             text-align: center;
@@ -241,7 +241,7 @@
 
         .copy-success-message {
             font-size: 0.85rem;
-            margin-top: 10px;
+            margin-top: 8px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             text-align: center;
@@ -266,7 +266,7 @@
         }
 
         .sol-success {
-            color: #00FFA3;
+            color: #9945FF;
         }
 
         @keyframes textPulse {
@@ -287,7 +287,7 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            margin-top: 8px;
             cursor: pointer;
             text-align: center;
             min-width: 200px;
@@ -303,9 +303,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         /* Rimosso la X di chiusura in alto a destra */
@@ -314,7 +314,7 @@
         }
 
         .donation-footer {
-            margin-top: 40px;
+            margin-top: 25px;
             text-align: center;
             font-size: 0.75rem;
             color: rgba(255, 255, 255, 0.3);
@@ -328,7 +328,7 @@
         }
 
         .creator-credit {
-            margin-top: 8px;
+            margin-top: 6px;
             font-size: 0.7rem;
             color: rgba(255, 255, 255, 0.25);
             letter-spacing: 0.8px;
@@ -359,33 +359,6 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
-            }
-        }
-
-        @keyframes copyPulse {
-            0% {
-                background: rgba(242, 169, 0, 0);
-            }
-            20% {
-                background: rgba(242, 169, 0, 0.25);
-            }
-            100% {
-                background: rgba(242, 169, 0, 0.15);
-            }
-        }
-
-        @keyframes copyText {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
             }
         }
 
@@ -554,6 +527,7 @@
             font-variant-numeric: tabular-nums;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
             transition: color 0.3s ease;
+            white-space: nowrap;
         }
 
         .dollar-sign {
@@ -741,11 +715,11 @@
             .donation-title {
                 font-size: 1.5rem;
                 letter-spacing: 3px;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
 
             .donation-subtitle {
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
 
             .crypto-address {
@@ -754,17 +728,19 @@
 
             .address-container {
                 width: 85%;
-                padding: 12px;
+                padding: 10px;
+                margin-bottom: 6px;
             }
 
             .donation-content {
-                padding: 15px;
+                padding: 12px;
             }
 
             .donation-button {
                 padding: 10px 20px;
                 font-size: 0.85rem;
                 min-width: 180px;
+                margin-top: 6px;
             }
             
             .copy-success-message {
@@ -773,6 +749,15 @@
             
             .creator-credit {
                 font-size: 0.65rem;
+            }
+            
+            .donation-footer {
+                margin-top: 20px;
+            }
+            
+            .button-group {
+                gap: 10px;
+                margin-top: 12px;
             }
         }
 
@@ -880,8 +865,7 @@
         
         <div class="price-display">
             <div class="current-price">
-                <span class="dollar-sign" id="dollarSign">$</span>
-                <span class="price-value" id="currentPrice">00.000</span>
+                <span class="dollar-sign" id="dollarSign">$</span><span class="price-value" id="currentPrice">00.000</span>
             </div>
             
             <div class="price-details">
@@ -976,7 +960,7 @@
                 name: 'Solana',
                 scale: 300,
                 baseScale: 300,
-                color: '#00FFA3',
+                color: '#9945FF',
                 symbol: 'SOL'
             }
         };
@@ -1096,7 +1080,7 @@
             // Copy address functionality for all three cryptocurrencies
             setupAddressCopy('btc', CONFIG.BTC_ADDRESS, elements.btcAddressContainer, elements.copySuccessMessageBTC, '#F2A900');
             setupAddressCopy('eth', CONFIG.ETH_ADDRESS, elements.ethAddressContainer, elements.copySuccessMessageETH, '#627EEA');
-            setupAddressCopy('sol', CONFIG.SOL_ADDRESS, elements.solAddressContainer, elements.copySuccessMessageSOL, '#00FFA3');
+            setupAddressCopy('sol', CONFIG.SOL_ADDRESS, elements.solAddressContainer, elements.copySuccessMessageSOL, '#9945FF');
             
             // Close on escape key
             document.addEventListener('keydown', function(e) {
