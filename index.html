@@ -57,33 +57,41 @@
             display: none;
         }
 
-        /* Asset Indicator */
-        .asset-indicator {
+        /* Asset Selector - now at the bottom */
+        .asset-selector {
             position: absolute;
-            top: 100px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 35px;
             z-index: 1001;
             transition: all 0.3s ease;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .asset-name {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 300;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            opacity: 0.9;
+            opacity: 0.6;
             transition: all 0.3s ease;
             position: relative;
-            padding: 0 10px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
         }
 
         .asset-name.active {
             opacity: 1;
             font-weight: 400;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .asset-name[data-asset="BTC"] {
@@ -96,28 +104,6 @@
 
         .asset-name[data-asset="SOL"] {
             color: #00FFA3;
-        }
-
-        .asset-arrow {
-            font-size: 1.8rem;
-            opacity: 0.2;
-            color: rgba(255, 255, 255, 0.5);
-            transition: opacity 0.3s ease;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .asset-arrow.left {
-            left: -40px;
-        }
-
-        .asset-arrow.right {
-            right: -40px;
-        }
-
-        .asset-arrow.show {
-            opacity: 0.6;
         }
 
         /* Donation Overlay */
@@ -534,7 +520,7 @@
         /* Price display */
         .price-display {
             position: absolute;
-            bottom: 50px;
+            bottom: 100px;
             text-align: center;
             transition: all 0.3s ease;
         }
@@ -543,10 +529,17 @@
             font-size: 2.6rem;
             font-weight: 300;
             letter-spacing: 1px;
-            color: #ffffff;
             font-variant-numeric: tabular-nums;
             font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
             transition: color 0.3s ease;
+        }
+
+        .dollar-sign {
+            transition: color 0.3s ease;
+        }
+
+        .price-number {
+            color: #ffffff;
         }
 
         .price-details {
@@ -695,7 +688,7 @@
                 letter-spacing: 12px;
             }
 
-            .asset-indicator,
+            .asset-selector,
             .clock-wrapper,
             .price-display,
             .status,
@@ -707,22 +700,16 @@
 
         /* Portrait mode adjustments */
         @media (max-width: 600px) and (orientation: portrait) {
-            .asset-indicator {
-                top: 80px;
-                gap: 20px;
+            .asset-selector {
+                bottom: 20px;
+                gap: 25px;
+                padding: 8px 16px;
             }
             
             .asset-name {
-                font-size: 1.2rem;
-                letter-spacing: 2px;
-            }
-            
-            .asset-arrow.left {
-                left: -35px;
-            }
-            
-            .asset-arrow.right {
-                right: -35px;
+                font-size: 1rem;
+                letter-spacing: 1.5px;
+                padding: 6px 12px;
             }
             
             .clock-wrapper {
@@ -741,7 +728,7 @@
             }
             
             .price-display {
-                bottom: 40px;
+                bottom: 80px;
             }
             
             .asset-label {
@@ -859,13 +846,11 @@
     <div class="container">
         <h1 class="title" id="pageTitle">BITCLOCK</h1>
         
-        <!-- Asset Indicator -->
-        <div class="asset-indicator" id="assetIndicator">
-            <div class="asset-arrow left">←</div>
+        <!-- Asset Selector - now at the bottom -->
+        <div class="asset-selector" id="assetSelector">
             <div class="asset-name active" data-asset="BTC">BTC</div>
             <div class="asset-name" data-asset="ETH">ETH</div>
             <div class="asset-name" data-asset="SOL">SOL</div>
-            <div class="asset-arrow right">→</div>
         </div>
         
         <div class="clock-wrapper" id="clockWrapper">
@@ -873,7 +858,10 @@
         </div>
         
         <div class="price-display">
-            <div class="current-price">$<span id="currentPrice">00.000</span></div>
+            <div class="current-price">
+                <span class="dollar-sign" id="dollarSign">$</span>
+                <span class="price-number" id="currentPrice">00.000</span>
+            </div>
             
             <div class="price-details">
                 <div class="detail">
@@ -1009,9 +997,9 @@
             clockFace: null,
             cooldownIndicator: null,
             // Asset elements
-            assetIndicator: document.getElementById('assetIndicator'),
+            assetSelector: document.getElementById('assetSelector'),
             assetNames: document.querySelectorAll('.asset-name'),
-            assetArrows: document.querySelectorAll('.asset-arrow'),
+            dollarSign: document.getElementById('dollarSign'),
             // Donation elements
             donationOverlay: document.getElementById('donationOverlay'),
             closeDonationTop: document.getElementById('closeDonationTop'),
@@ -1062,7 +1050,7 @@
                 if (e.target.closest('.clock-wrapper') || 
                     e.target.closest('.price-display') || 
                     e.target.closest('.status') ||
-                    e.target.closest('.asset-indicator')) {
+                    e.target.closest('.asset-selector')) {
                     return;
                 }
                 
@@ -1304,80 +1292,27 @@
             }, 2000);
         }
 
-        // Setup swipe handlers
-        function setupSwipeHandlers() {
-            if (!elements.clockWrapper || state.isLandscape) return;
-            
-            // Touch events for mobile
-            elements.clockWrapper.addEventListener('touchstart', handleTouchStart);
-            elements.clockWrapper.addEventListener('touchend', handleTouchEnd);
-            
-            // Mouse events for desktop
-            elements.clockWrapper.addEventListener('mousedown', handleMouseDown);
-            elements.clockWrapper.addEventListener('mouseup', handleMouseUp);
-            
-            // Keyboard arrows for desktop
-            document.addEventListener('keydown', handleKeyDown);
-        }
-
-        function handleTouchStart(e) {
-            state.touchStartX = e.changedTouches[0].screenX;
-        }
-
-        function handleTouchEnd(e) {
-            state.touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }
-
-        function handleMouseDown(e) {
-            state.touchStartX = e.screenX;
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-
-        function handleMouseUp(e) {
-            state.touchEndX = e.screenX;
-            handleSwipe();
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-
-        function handleSwipe() {
-            const diff = state.touchStartX - state.touchEndX;
-            
-            if (Math.abs(diff) > state.swipeThreshold) {
-                if (diff > 0) {
-                    // Swipe left - next asset
-                    switchToNextAsset();
-                } else {
-                    // Swipe right - previous asset
-                    switchToPreviousAsset();
-                }
-            }
-        }
-
-        function handleKeyDown(e) {
-            if (state.isLandscape) return;
-            
-            if (e.key === 'ArrowLeft') {
-                switchToPreviousAsset();
-            } else if (e.key === 'ArrowRight') {
-                switchToNextAsset();
-            }
-        }
-
-        function switchToNextAsset() {
-            const assets = ['BTC', 'ETH', 'SOL'];
-            const currentIndex = assets.indexOf(state.currentAsset);
-            const nextIndex = (currentIndex + 1) % assets.length;
-            
-            switchAsset(assets[nextIndex]);
-        }
-
-        function switchToPreviousAsset() {
-            const assets = ['BTC', 'ETH', 'SOL'];
-            const currentIndex = assets.indexOf(state.currentAsset);
-            const prevIndex = (currentIndex - 1 + assets.length) % assets.length;
-            
-            switchAsset(assets[prevIndex]);
+        // Setup asset selector click handlers
+        function setupAssetSelector() {
+            elements.assetNames.forEach(name => {
+                name.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (this.dataset.asset !== state.currentAsset) {
+                        switchAsset(this.dataset.asset);
+                    }
+                });
+                
+                name.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (this.dataset.asset !== state.currentAsset) {
+                        switchAsset(this.dataset.asset);
+                    }
+                });
+            });
         }
 
         function switchAsset(newAsset) {
@@ -1385,16 +1320,13 @@
             
             state.currentAsset = newAsset;
             
-            // Update asset indicator
+            // Update asset selector
             elements.assetNames.forEach(name => {
                 name.classList.remove('active');
                 if (name.dataset.asset === newAsset) {
                     name.classList.add('active');
                 }
             });
-            
-            // Update arrows visibility
-            updateArrowsVisibility();
             
             // Apply transition effect
             if (elements.clockContainer) {
@@ -1404,8 +1336,8 @@
                 }, 500);
             }
             
-            // Update price display color
-            updatePriceDisplayColor();
+            // Update dollar sign color
+            updateDollarSignColor();
             
             // Update clock scale
             updateScale();
@@ -1428,20 +1360,9 @@
             updateDisplay();
         }
 
-        function updateArrowsVisibility() {
-            const assets = ['BTC', 'ETH', 'SOL'];
-            const currentIndex = assets.indexOf(state.currentAsset);
-            
-            // Show left arrow if not on first asset
-            elements.assetArrows[0].classList.toggle('show', currentIndex > 0);
-            // Show right arrow if not on last asset
-            elements.assetArrows[1].classList.toggle('show', currentIndex < assets.length - 1);
-        }
-
-        function updatePriceDisplayColor() {
+        function updateDollarSignColor() {
             const asset = ASSETS[state.currentAsset];
-            elements.priceDisplay.style.color = asset.color;
-            elements.currentPrice.style.color = asset.color;
+            elements.dollarSign.style.color = asset.color;
         }
 
         // Touch/click handler for manual update
@@ -1528,7 +1449,6 @@
                     createClock();
                     
                     setupTouchHandler();
-                    setupSwipeHandlers();
                     
                     if (!state.isLandscape) {
                         requestAnimationFrame(updateClock);
@@ -1618,7 +1538,7 @@
                 elements.clockWrapper.style.display = 'none';
                 elements.priceDisplay.style.display = 'none';
                 elements.status.style.display = 'none';
-                elements.assetIndicator.style.display = 'none';
+                elements.assetSelector.style.display = 'none';
             } else {
                 elements.title.style.position = 'absolute';
                 elements.title.style.top = '40px';
@@ -1631,10 +1551,7 @@
                 elements.clockWrapper.style.display = 'block';
                 elements.priceDisplay.style.display = 'block';
                 elements.status.style.display = 'block';
-                elements.assetIndicator.style.display = 'flex';
-                
-                // Update arrows visibility
-                updateArrowsVisibility();
+                elements.assetSelector.style.display = 'flex';
             }
         }
 
@@ -1790,13 +1707,15 @@
             // Setup donation page
             setupDonationPage();
             
+            // Setup asset selector
+            setupAssetSelector();
+            
             // Initial setup
             updateOrientationDisplay();
             createClock();
             
             // Setup touch handlers
             setupTouchHandler();
-            setupSwipeHandlers();
             
             // Listen for orientation changes
             window.addEventListener('resize', handleOrientationChange);
@@ -1817,6 +1736,9 @@
 
             // Initial data fetch
             await fetchAllPrices();
+            
+            // Update dollar sign color
+            updateDollarSignColor();
             
             // Update every 15 seconds
             setInterval(() => {
